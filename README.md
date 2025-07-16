@@ -1,7 +1,11 @@
-# projectThuctap
+#  Backend Meeting Minutes
 
-Dự án Node.js sử dụng Firebase, Azure, Gemini API để quản lý xác thực, cuộc họp và các dịch vụ liên quan.
+Dự án backend dùng để xử lý **cuộc họp**, bao gồm:
+-  Chuyển giọng nói thành văn bản (speech-to-text)
+-  Tóm tắt nội dung cuộc họp bằng AI (Gemini)
+-  Lưu trữ và quản lý biên bản họp
 
+Sử dụng: **Node.js**, **Firebase Admin**, **Azure Speech Service**, và **Gemini API**
 ## Yêu cầu hệ thống
 
 - Node.js >= 14.x
