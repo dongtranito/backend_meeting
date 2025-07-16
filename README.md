@@ -67,5 +67,4 @@ src/
 
 ## Liên hệ
 
-- Tên bạn hoặc nhóm phát triển
-- Email liên hệ (nếu cần) 
+ĐồngTrần
