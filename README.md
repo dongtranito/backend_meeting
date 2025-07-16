@@ -23,6 +23,19 @@ Dự án Node.js sử dụng Firebase, Azure, Gemini API để quản lý xác t
 3. Thêm file cấu hình Firebase:
    - Đặt file `serviceAccountKey.json` vào thư mục `src/services/`.
    - **Lưu ý:** Không chia sẻ file này công khai.
+  
+## 🌱 Cấu hình môi trường
+
+Tạo file `.env` trong thư mục gốc và thêm các biến sau:
+
+```env
+PORT=3001  
+NODE_ENV=development
+
+AZURE_SPEECH_KEY=...
+AZURE_REGION=southeastasia
+
+GEMINI_API_KEY=...
 
 ## Chạy dự án
 
