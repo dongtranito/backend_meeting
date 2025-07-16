@@ -11,7 +11,7 @@ Dự án Node.js sử dụng Firebase, Azure, Gemini API để quản lý xác t
 
 1. Clone repository:
    ```sh
-   git clone https://github.com/your-username/your-repo.git
+   git clone https://github.com/dongtranito/backend_meeting
    cd projectThuctap
    ```
 
