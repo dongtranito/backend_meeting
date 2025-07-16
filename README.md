@@ -1,37 +1,58 @@
-# Express.js Project
+# projectThuctap
 
-A basic Express.js API project with essential configurations.
+Dự án Node.js sử dụng Firebase, Azure, Gemini API để quản lý xác thực, cuộc họp và các dịch vụ liên quan.
 
-## Features
+## Yêu cầu hệ thống
 
-- Express.js server setup
-- CORS enabled
-- Environment variables support
-- Basic routing
-- Development mode with auto-reload
+- Node.js >= 14.x
+- npm >= 6.x
 
-## Installation
+## Cài đặt
 
-1. Clone the repository
-2. Install dependencies:
-```bash
-npm install
+1. Clone repository:
+   ```sh
+   git clone https://github.com/your-username/your-repo.git
+   cd projectThuctap
+   ```
+
+2. Cài đặt các package:
+   ```sh
+   npm install
+   ```
+
+3. Thêm file cấu hình Firebase:
+   - Đặt file `serviceAccountKey.json` vào thư mục `src/services/`.
+   - **Lưu ý:** Không chia sẻ file này công khai.
+
+## Chạy dự án
+
+```sh
+node src/app.js
 ```
 
-## Running the Application
-
-Development mode:
-```bash
-npm run dev
-```
-
-Production mode:
-```bash
+Hoặc nếu có script trong package.json:
+```sh
 npm start
 ```
 
-The server will start on port 3000 by default. You can change this by setting the PORT environment variable.
+## Cấu trúc thư mục
 
-## API Endpoints
+```
+src/
+  app.js
+  controllers/
+  middlewares/
+  routes/
+  services/
+  utils/
+```
 
-- GET `/`: Welcome message 
+## Lưu ý bảo mật
+
+- Không đẩy file `serviceAccountKey.json` lên GitHub.
+- Sử dụng file `.env` để lưu các biến môi trường nhạy cảm.
+
+## Liên hệ
+
+- Tên bạn hoặc nhóm phát triển
+- Email liên hệ (nếu cần) 
