@@ -8,7 +8,6 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const sumarySchema = {
   type: Type.OBJECT,
   properties: {
-    title: { type: Type.STRING },
     summary: { type: Type.STRING },
     highlights: {
       type: Type.ARRAY,
@@ -33,13 +32,14 @@ const sumarySchema = {
       }
     }
   },
-  required: ["title", "summary", "highlights", "insights"]
+  required: [ "summary", "highlights", "insights"]
 };
 
 
 const bienBanSchema = {
   type: Type.OBJECT,
   properties: {
+    title: { type: Type.STRING },
     ten_cuoc_hop: { type: Type.STRING },
     chu_tri: {
       type: Type.OBJECT,
@@ -98,11 +98,10 @@ const bienBanSchema = {
 
 async function summarizeTranscript(transcriptRaw) {
 
-const prompt = `
+  const prompt = `
   Bạn sẽ được cung cấp transcript một cuộc họp (gồm timestamp và nội dung của người nói). Hãy phân tích nội dung và trả kết quả ở dạng JSON như sau:
   
   {
-    "title": "<Tiêu đề ngắn gọn đại diện cho toàn bộ cuộc họp>",
     "summary": "<Tóm tắt 4–6 câu mô tả nội dung tổng quan của cuộc họp>",
     "highlights": [
       { "title": "<Tiêu đề ngắn gọn>", "text": "<Một câu mô tả ngắn>" }
@@ -149,6 +148,7 @@ async function generateBienBan(transcriptRaw) {
   Bạn sẽ được cung cấp một transcript cuộc họp, thời gian kết thúc cuộc họp, và yêu cầu của người dùng . Bạn hãy phân tích và trích xuất thông tin để tạo một biên bản cuộc họp có dạng JSON với cấu trúc sau:
   
   {
+   "title": "<Tiêu đề ngắn gọn đại diện cho toàn bộ cuộc họp>",
     "ten_cuoc_hop": "Tên cuộc họp (ví dụ: 'Cuộc họp về Kỹ thuật công nghệ')",
     "chu_tri": { "cv": "Chức vụ", "ten": "Tên người chủ trì" },
     "co_quan": "Tên cơ quan, công ty tổ chức cuộc họp",
@@ -214,52 +214,7 @@ async function generateBienBan(transcriptRaw) {
 
 
 
-
-
-async function regenerateBienBan(originalBienBan, userInstruction, transcriptRaw) {
-  const prompt = `
-Bạn là trợ lý AI. Hãy chỉnh sửa hoặc bổ sung nội dung vào biên bản cuộc họp bên dưới **dựa trên transcript gốc và yêu cầu người dùng**.
-
-📄 Đây là biên bản cuộc họp hiện tại (có thể chưa đầy đủ):
-${JSON.stringify(originalBienBan, null, 2)}
-
-🗒️ Đây là transcript cuộc họp gốc:
-${JSON.stringify(transcriptRaw)}
-
-🛠️ Đây là yêu cầu của người dùng:
-"${userInstruction}"
-
-🎯 Hãy chỉnh sửa biên bản sao cho phù hợp với yêu cầu trên, đảm bảo mọi thông tin phải **tham chiếu chính xác từ transcript**. Nếu người dùng yêu cầu viết chi tiết thêm về một nội dung, hãy tìm phần đó trong transcript rồi viết lại dài hơn.
-
-⛔ Trả lại **JSON hoàn chỉnh duy nhất**, không thêm văn bản ngoài JSON.
-  `;
-
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: bienBanSchema
-    }
-  });
-
-  const text = response.candidates[0].content.parts[0].text;
-  try {
-    return JSON.parse(text);
-  } catch (err) {
-    throw new Error("Không parse được JSON từ Gemini: " + err.message);
-  }
-}
-
-
-
-
-
-
-
-
-
 // const result = summarizeTranscript(transcriptRaw);
 // const bienBan = generateBienBan(transcriptRaw);
 
-module.exports = { summarizeTranscript, generateBienBan, regenerateBienBan };
+module.exports = { summarizeTranscript, generateBienBan };

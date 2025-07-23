@@ -79,7 +79,6 @@ const logout = (req, res) => {
 };
 
 const getProfile = (req, res) => {
-    
     res.json({ message: "Thông tin người dùng từ token", email: req.email, });
 };
 

@@ -1,31 +1,116 @@
-// controllers/meetingController.js
-const { db } = require("../services/firebaseService");
-
-const createMeeting = async (req, res) => {
-  const email = req.email; 
-//   console.log(email)
-  const { transcript, bienBanData, summaryData } = req.body;
+const { generateBienBan,summarizeTranscript } = require('../services/geminiService');
+const {saveOrUpdateMeeting} = require("../services/meetingService")
 
 
-  try {
-    const newMeeting = {
-      email,
-      summaryData,
-      transcript,
-      bienBanData,
-      createdAt: new Date(),
-    };
 
-    const docRef = await db.collection("meetings").add(newMeeting);
 
-    res.status(201).json({
-      message: "Lưu cuộc họp thành công",
-      meetingId: docRef.id,
-    });
-  } catch (error) {
-    console.error("🔥 Lỗi khi lưu cuộc họp:", error);
-    res.status(500).json({ message: "Lỗi server khi lưu cuộc họp" });
+async function handleTranscriptUpload(req, res) {
+    try {
+      const email = req.email; 
+
+      const transcriptRaw = req.body;  // gồm toàn bộ dữ liệu gởi từ frontend (transcript, bienBanData, meetingID, sumarryData,transcriptchat)
+      const hasOldSummary = !!transcriptRaw.summaryData;   
+      let summaryData;
+      let summaryPromise = null;
+  
+      if (hasOldSummary) {
+        summaryData = transcriptRaw.summaryData;
+      } else {
+        summaryPromise = summarizeTranscript(transcriptRaw);
+      }
+        const bienBanPromise = generateBienBan(transcriptRaw);
+      if (summaryPromise) {
+        summaryData = await summaryPromise;
+      }
+  
+
+      let transcript=transcriptRaw.transcript;
+      let meetingId=transcriptRaw.meetingId;
+
+      const bienBanData = await bienBanPromise;
+      meetingId= await saveOrUpdateMeeting({email,transcript,summaryData,bienBanData,meetingId })
+      res.json({
+        summaryData,
+        bienBanData,
+        transcriptRaw,
+        meetingId
+      });
+    } catch (err) {
+      console.error("❌ Lỗi khi xử lý transcript:", err);
+      res.status(500).json({ error: "Lỗi xử lý transcript" });
+    }
   }
-};
+  
 
-module.exports = { createMeeting };
+  const getMeetingList = async (req, res) => {
+    const email = req.email;
+  
+    try {
+      const snapshot = await db
+        .collection("meetings")
+        .where("email", "==", email)
+        .orderBy("createdAt", "desc")
+        .get();
+  
+      const meetings = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.bienBanData?.title || "Không có tiêu đề",
+          createdAt: data.createdAt?.toDate() || null,
+          updatedAt: data.updatedAt?.toDate() || null,
+        };
+      });
+  
+      res.status(200).json({
+        message: "Lấy danh sách cuộc họp thành công",
+        data: meetings,
+      });
+    } catch (error) {
+      console.error(" Lỗi khi lấy danh sách cuộc họphọp:", error);
+      res.status(500).json({ message: "Lỗi server khi lấy danh sách cuộc họp" });
+    }
+  };
+  
+  const getMeetingDetail = async (req, res) => {
+    const meetingId = req.params.meetingId;
+  
+    try {
+      const docRef = db.collection("meetings").doc(meetingId);
+      const doc = await docRef.get();
+  
+      if (!doc.exists) {
+        return res.status(404).json({ message: "Không tìm thấy biên bản họp" });
+      }
+  
+      const meeting = doc.data();
+  
+      res.status(200).json({
+        meetingId: doc.id,
+        ...meeting,
+      });
+    } catch (error) {
+      console.error("Lỗi khi lấy chi tiết cuộc họp:", error);
+      res.status(500).json({ message: "Lỗi server" });
+    }
+  };
+
+  const deleteMeeting = async (req, res) => {
+    const meetingId = req.params.meetingId;
+  
+    try {
+      const meetingRef = db.collection("meetings").doc(meetingId);
+  
+      const doc = await meetingRef.get();
+      if (!doc.exists) {
+        return res.status(404).json({ message: "Meeting không tồn tại" });
+      }
+  
+      await meetingRef.delete();
+      res.status(200).json({ message: "Xoá cuộc họp thành công" });
+    } catch (error) {
+      console.error("Lỗi khi xoá:", error);
+      res.status(500).json({ message: "Lỗi server khi xoá cuộc họp" });
+    }
+  };
+module.exports = {  handleTranscriptUpload, getMeetingList, getMeetingDetail,deleteMeeting};

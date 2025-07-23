@@ -1,10 +1,12 @@
-// routes/meetingRoutes.js
-const express = require("express");
-const { createMeeting } = require("../controllers/meetingController");
+const express = require('express');
+const router = express.Router();
+const { handleTranscriptUpload } = require('../controllers/meetingController');
 const {verifyAccessToken} =require ("../middlewares/authMiddleware");
 
-const router = express.Router();
 
-router.post("/createMeeting", verifyAccessToken, createMeeting);
+router.use(verifyAccessToken);
+router.post('/submitTranscript' ,handleTranscriptUpload);
+
+
 
 module.exports = router;

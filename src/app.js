@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const tokenRoute = require('./routes/azureRoute');
-const geminiRoute = require('./routes/geminiRoute');
 const authRoutes = require("./routes/authRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
 const cookieParser = require("cookie-parser");
@@ -27,7 +26,6 @@ app.get('/', (req, res) => {
 
 
 app.use('/api', tokenRoute);
-app.use('/api', geminiRoute);
 app.use('/', authRoutes);
 app.use('/',meetingRoutes)
 
