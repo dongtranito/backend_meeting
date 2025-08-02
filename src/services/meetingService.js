@@ -1,12 +1,13 @@
 const { db, admin } = require('./firebaseService');
 
-async function saveOrUpdateMeeting({ email, transcript, summaryData, bienBanData, meetingId }) {
+async function saveOrUpdateMeeting({ email, transcript, summaryData, bienBanData, meetingId,thoiGianKetThuc }) {
   const meetingData = {
     email,
     summaryData,
     transcript,
     bienBanData,
     updatedAt: admin.firestore.Timestamp.now(),
+    thoiGianKetThuc,
   };
 
   if (meetingId) {

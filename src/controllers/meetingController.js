@@ -1,6 +1,6 @@
 const { generateBienBan,summarizeTranscript } = require('../services/geminiService');
 const {saveOrUpdateMeeting} = require("../services/meetingService")
-
+const {db,admin} =require("../services/firebaseService")
 
 
 
@@ -13,6 +13,7 @@ async function handleTranscriptUpload(req, res) {
       let summaryData;
       let summaryPromise = null;
   
+      // console.log (transcriptRaw)
       if (hasOldSummary) {
         summaryData = transcriptRaw.summaryData;
       } else {
@@ -25,15 +26,17 @@ async function handleTranscriptUpload(req, res) {
   
 
       let transcript=transcriptRaw.transcript;
+      let  thoiGianKetThuc= transcriptRaw.thoiGianKetThuc;
       let meetingId=transcriptRaw.meetingId;
 
       const bienBanData = await bienBanPromise;
-      meetingId= await saveOrUpdateMeeting({email,transcript,summaryData,bienBanData,meetingId })
+      meetingId= await saveOrUpdateMeeting({email,transcript,summaryData,bienBanData,meetingId, thoiGianKetThuc })
       res.json({
         summaryData,
         bienBanData,
-        transcriptRaw,
-        meetingId
+        transcript,
+        meetingId,
+        thoiGianKetThuc,
       });
     } catch (err) {
       console.error("❌ Lỗi khi xử lý transcript:", err);
@@ -49,7 +52,6 @@ async function handleTranscriptUpload(req, res) {
       const snapshot = await db
         .collection("meetings")
         .where("email", "==", email)
-        .orderBy("createdAt", "desc")
         .get();
   
       const meetings = snapshot.docs.map(doc => {
@@ -86,7 +88,7 @@ async function handleTranscriptUpload(req, res) {
       const meeting = doc.data();
   
       res.status(200).json({
-        meetingId: doc.id,
+        meetingID: doc.id,
         ...meeting,
       });
     } catch (error) {
