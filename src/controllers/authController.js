@@ -68,6 +68,8 @@ const refreshToken = (req, res) => {
         res.cookie("accessToken", newAccessToken, {
             httpOnly: true,
             maxAge: 15 * 60 * 1000,
+            sameSite: "none",
+            secure: true,
         });
 
         res.json({ message: "Refresh thành công" });
