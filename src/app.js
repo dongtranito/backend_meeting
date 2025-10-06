@@ -1,10 +1,13 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const tokenRoute = require('./routes/azureRoute');
-const authRoutes = require("./routes/authRoutes");
-const meetingRoutes = require("./routes/meetingRoutes");
-const cookieParser = require("cookie-parser");
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import tokenRoute from './routes/azureRoute.js';
+import authRoutes from './routes/authRoutes.js';
+import meetingRoutes from './routes/meetingRoutes.js';
+import cookieParser from 'cookie-parser';
+import userRoutes from './routes/userRoutes.js';
+
+dotenv.config();
 
 
 const app = express();
@@ -27,7 +30,8 @@ app.get('/', (req, res) => {
 
 app.use('/api', tokenRoute);
 app.use('/', authRoutes);
-app.use('/',meetingRoutes)
+app.use('/', meetingRoutes)
+app.use('/', userRoutes);
 
 
 

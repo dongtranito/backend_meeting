@@ -1,4 +1,4 @@
-const jwtService = require("../services/jwtService");
+import jwtService from '../services/jwtService.js';
 
 const verifyAccessToken = (req, res, next) => {
   const token = req.cookies.accessToken;
@@ -32,4 +32,4 @@ const verifyRefreshToken = (req, res, next) => {
   }
 };
 
-module.exports = { verifyAccessToken, verifyRefreshToken};
+export { verifyAccessToken, verifyRefreshToken };

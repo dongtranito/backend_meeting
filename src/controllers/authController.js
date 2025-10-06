@@ -1,32 +1,27 @@
-const { admin, db } = require("../services/firebaseService");
-const jwtService = require("../services/jwtService");
+import { admin, db } from '../services/firebaseService.js';
+import jwtService from '../services/jwtService.js';
 
 const login = async (req, res) => {
     const { idToken } = req.body;
 
-    if (!idToken) {
-        
+    if (!idToken) {   
         return res.status(400).json({ message: "Thiếu idToken từ client" });
-        
     }
 
     try {
         const decoded = await admin.auth().verifyIdToken(idToken);
         // console.log(decoded);
         const email = decoded.email;
-        const usersRef = db.collection("users");
-        const userSnap = await usersRef.where("email", "==", email).get();
+        const userRef = db.collection("users").doc(email);
+        const doc = await userRef.get();
 
-        if (userSnap.empty) {
-            await usersRef.add({
-                email: email,
-                name: decoded.name || "",
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                picture: decoded.picture
-            });
-            // console.log(" Tạo user mới trong Firestore:", email);
-        } else {
-            // console.log("Đã tồn tại user với email:", email);
+        if (!doc.exists) {
+        await userRef.set({
+            email,
+            name: decoded.name || "",
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            picture: decoded.picture
+        });
         }
 
         const accessToken = jwtService.createAccessToken(email);
@@ -88,7 +83,7 @@ const getProfile = (req, res) => {
     res.json({ message: "Thông tin người dùng từ token", email: req.email, });
 };
 
-module.exports = {
+export {
     login,
     refreshToken,
     logout,

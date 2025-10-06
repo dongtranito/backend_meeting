@@ -1,6 +1,6 @@
-const { generateBienBan,summarizeTranscript } = require('../services/geminiService');
-const {saveOrUpdateMeeting} = require("../services/meetingService")
-const {db,admin} =require("../services/firebaseService")
+import { generateBienBan, summarizeTranscript } from '../services/geminiService.js';
+import { saveOrUpdateMeeting } from '../services/meetingService.js';
+import { db, admin } from '../services/firebaseService.js';
 
 
 
@@ -43,7 +43,6 @@ async function handleTranscriptUpload(req, res) {
       res.status(500).json({ error: "Lỗi xử lý transcript" });
     }
   }
-  
 
   const getMeetingList = async (req, res) => {
     const email = req.email;
@@ -115,4 +114,5 @@ async function handleTranscriptUpload(req, res) {
       res.status(500).json({ message: "Lỗi server khi xoá cuộc họp" });
     }
   };
-module.exports = {  handleTranscriptUpload, getMeetingList, getMeetingDetail,deleteMeeting};
+
+export { handleTranscriptUpload, getMeetingList, getMeetingDetail, deleteMeeting };

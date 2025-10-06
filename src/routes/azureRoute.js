@@ -1,7 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { getToken, saveTextResult } from '../controllers/azureControllers.js';
+
+import { verifyAccessToken } from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
-const {getToken, saveTextResult} = require('../controllers/azureControllers');
-const {verifyAccessToken} =require ("../middlewares/authMiddleware");
 
 
 router.use(verifyAccessToken);
@@ -10,4 +12,4 @@ router.post('/receiveSpeech', saveTextResult);
 // router.get('/receiveSpeech', tokenController.getToken);
 
 
-module.exports = router;
+export default router;

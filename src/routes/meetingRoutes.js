@@ -1,7 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { handleTranscriptUpload, getMeetingDetail, getMeetingList, deleteMeeting } from '../controllers/meetingController.js';
+
+import { verifyAccessToken } from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
-const { handleTranscriptUpload, getMeetingDetail,getMeetingList,deleteMeeting } = require('../controllers/meetingController');
-const {verifyAccessToken} =require ("../middlewares/authMiddleware");
 
 
 router.use(verifyAccessToken);
@@ -13,4 +15,4 @@ router.delete('/deleteMeeting/:meetingId' ,deleteMeeting);
 
 
 
-module.exports = router;
+export default router;

@@ -1,5 +1,6 @@
-const { GoogleGenAI, Type } = require("@google/genai");
-const dotenv = require("dotenv");
+import { GoogleGenAI, Type } from '@google/genai';
+import dotenv from 'dotenv';
+
 dotenv.config();
 
 
@@ -217,4 +218,4 @@ async function generateBienBan(transcriptRaw) {
 // const result = summarizeTranscript(transcriptRaw);
 // const bienBan = generateBienBan(transcriptRaw);
 
-module.exports = { summarizeTranscript, generateBienBan };
+export { summarizeTranscript, generateBienBan };

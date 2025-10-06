@@ -1,7 +1,7 @@
 // File: generateMinutes.js
 
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
+import PDFDocument from 'pdfkit';
+import fs from 'fs';
 // Đổi mm sang point (1 mm ≈ 2.835 point)
 const mm = val => val * 2.835;
 

@@ -1,5 +1,7 @@
-require('dotenv').config();
-const { getAzureSpeechToken } = require('../services/azureTokenService');
+import dotenv from 'dotenv';
+import { getAzureSpeechToken } from '../services/azureTokenService.js';
+
+dotenv.config();
 
 const getToken = async (req, res) => {
   const key = process.env.AZURE_SPEECH_KEY;
@@ -35,6 +37,6 @@ const saveTextResult = async (req, res) => {
 
 
 
-module.exports = { getToken, saveTextResult };
+export { getToken, saveTextResult };
 
 

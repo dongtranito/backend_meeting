@@ -1,11 +1,13 @@
-const express = require('express');
+import express from 'express';
+import { login, logout, refreshToken, getProfile } from '../controllers/authController.js';
+
+import { verifyAccessToken, verifyRefreshToken } from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
-const { login,logout,refreshToken,getProfile } =require( '../controllers/authController');
-const {verifyAccessToken, verifyRefreshToken} =require ("../middlewares/authMiddleware");
 
 router.post("/login", login);
 router.post("/refresh-token", verifyRefreshToken, refreshToken);
 router.post("/logout", verifyAccessToken,logout);
 router.get("/profile", verifyAccessToken, getProfile);
 
-module.exports = router;
+export default router;

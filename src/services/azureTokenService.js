@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 const getAzureSpeechToken = async (key, region) => {
     const url = `https://${region}.api.cognitive.microsoft.com/sts/v1.0/issueToken`;
@@ -11,5 +11,5 @@ const getAzureSpeechToken = async (key, region) => {
     return response.data;
   };
   
-  module.exports = { getAzureSpeechToken };
+export { getAzureSpeechToken };
   

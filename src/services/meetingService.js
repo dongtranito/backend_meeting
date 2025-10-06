@@ -1,4 +1,4 @@
-const { db, admin } = require('./firebaseService');
+import { db, admin } from './firebaseService.js';
 
 async function saveOrUpdateMeeting({ email, transcript, summaryData, bienBanData, meetingId,thoiGianKetThuc }) {
   const meetingData = {
@@ -29,4 +29,4 @@ async function saveOrUpdateMeeting({ email, transcript, summaryData, bienBanData
   }
 }
 
-module.exports = { saveOrUpdateMeeting };
+export { saveOrUpdateMeeting };
