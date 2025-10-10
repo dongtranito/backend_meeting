@@ -8,6 +8,6 @@ const upload = multer({ dest: "uploads/" });
 
 
 router.use(verifyAccessToken);
-router.post('/uploadSample' ,upload.single("file") ,handleSampleVoiceUpload);
+router.get('/uploadSample' ,upload.single("file") ,handleSampleVoiceUpload);
 router.get ('/getSampleVoice', getSampleVoice);
 export default router;

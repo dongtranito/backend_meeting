@@ -20,7 +20,7 @@ const verifyRefreshToken = (req, res, next) => {
   const token = req.cookies.refreshToken;
 
   if (!token) {
-    return res.status(401).json({ message: "Chưa đăng nhập" });
+    return res.status(401).json({ message: "Không có refresh token" });
   }
 
   try {
