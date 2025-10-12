@@ -7,7 +7,8 @@ import {
     updateGroup,
     getDetailGroup,
     inviteMember,
-    removeMember
+    removeMember,
+    leaveGroup
 } from '../controllers/groupController.js'
 
 const router = express.Router();
@@ -21,4 +22,5 @@ router.delete("/delete-group/:groupId", deleteGroup);
 router.get("/detail-group/:groupId", getDetailGroup);   // cái này là lấy danh sách thành viên trong group
 router.post("/invite-member", inviteMember);
 router.delete('/remove-member', removeMember);
+router.post('/leave-group', leaveGroup);
 export default router;

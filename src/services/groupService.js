@@ -237,3 +237,36 @@ export async function removeMember(userId, groupId, memberId) {
     throw error;
   }
 }
+
+export async function leaveGroup(userId, groupId) {
+  try {
+    const groupRef = db.collection("groups").doc(groupId);
+    const groupDoc = await groupRef.get();
+
+    if (!groupDoc.exists) {
+      throw new Error("Group không tồn tại");
+    }
+
+    const groupData = groupDoc.data();
+
+    if (groupData.owner_id === userId) {
+      throw new Error("Chủ group không tự thế rời group được");
+    }
+
+    const memberRef = groupRef.collection("members").doc(userId);
+    const memberDoc = await memberRef.get();
+
+    if (!memberDoc.exists) {
+      throw new Error("Bạn không phải là thành viên trong group này");
+    }
+
+    await memberRef.delete();
+
+    return {
+      message: "Rời group thành công",
+      groupId,
+    };
+  } catch (error) {
+    throw error;
+  }
+}

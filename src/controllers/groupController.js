@@ -164,3 +164,30 @@ export async function removeMember(req, res) {
     });
   }
 }
+
+
+export async function leaveGroup(req, res) {
+  try {
+    const userId = req.email;
+    const { groupId } = req.body;
+
+    if (!groupId) {
+      return res.status(400).json({
+        success: false,
+        error: "Thiếu groupId",
+      });
+    }
+
+    const result = await groupService.leaveGroup(userId, groupId);
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error",
+    });
+  }
+}
