@@ -1,10 +1,13 @@
 import { admin, db } from '../services/firebaseService.js';
 import jwtService from '../services/jwtService.js';
 
+import dotenv from "dotenv";
+dotenv.config();
+
 const login = async (req, res) => {
     const { idToken } = req.body;
 
-    if (!idToken) {   
+    if (!idToken) {
         return res.status(400).json({ message: "Thiếu idToken từ client" });
     }
 
@@ -16,12 +19,12 @@ const login = async (req, res) => {
         const doc = await userRef.get();
 
         if (!doc.exists) {
-        await userRef.set({
-            email,
-            name: decoded.name || "",
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            picture: decoded.picture
-        });
+            await userRef.set({
+                email,
+                name: decoded.name || "",
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                picture: decoded.picture
+            });
         }
 
         const accessToken = jwtService.createAccessToken(email);

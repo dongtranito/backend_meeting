@@ -7,6 +7,7 @@ import meetingRoutes from './routes/meetingRoutes.js';
 import cookieParser from 'cookie-parser';
 import userRoutes from './routes/userRoutes.js';
 import groupRoutes from './routes/groupRoutes.js'
+import meetingRoutes1 from './routes/meetingRoutes1.js'
 
 dotenv.config();
 
@@ -33,7 +34,8 @@ app.use('/api', tokenRoute);
 app.use('/', authRoutes);
 app.use('/', meetingRoutes)
 app.use('/', userRoutes);
-app.use('/', groupRoutes)
+app.use('/', groupRoutes);
+app.use('/', meetingRoutes1);
 
 
 
