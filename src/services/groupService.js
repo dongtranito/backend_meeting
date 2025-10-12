@@ -15,18 +15,21 @@ export async function getListGroup(userId) {
         ownedGroups.push({
           groupId: groupDoc.id,
           ...groupData,
-          memberInfo: { role: "owner", is_editor: true },
+          // memberInfo: { role: "owner", is_editor: true },
+          createdAt: groupData.createdAt?.toDate().toISOString() || null,
+          updatedAt: groupData.updatedAt?.toDate().toISOString() || null,
         });
       }
 
       const membersRef = groupDoc.ref.collection("members");
-      const memberDoc = await membersRef.where("user_id", "==", userId).get();
+      const memberDoc = await membersRef.where("user_id", "==", userId).get();  // tìm coi thử mày có trong group đó không 
 
       if (!memberDoc.empty) {
         joinedGroups.push({
           groupId: groupDoc.id,
           ...groupData,
-          memberInfo: memberDoc.docs[0].data(),
+          createdAt: groupData.createdAt?.toDate().toISOString() || null,
+          updatedAt: groupData.updatedAt?.toDate().toISOString() || null,
         });
       }
     }
@@ -155,7 +158,7 @@ export async function getDetailGroup(groupId) {
       members,
       createdAt: groupDoc.data().createdAt.toDate().toISOString(),
       updatedAt: groupDoc.data().updatedAt.toDate().toISOString(),
-      
+
     };
   } catch (error) {
     throw err;
