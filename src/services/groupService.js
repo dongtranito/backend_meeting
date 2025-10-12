@@ -145,6 +145,7 @@ export async function getDetailGroup(groupId) {
 
     const members = membersSnapshot.docs.map((doc) => ({
       ...doc.data(),
+      joinedAt: doc.data().joinedAt?.toDate().toISOString(),
     }));
 
     return {
@@ -152,6 +153,9 @@ export async function getDetailGroup(groupId) {
       ...groupDoc.data(),
       membersCount,
       members,
+      createdAt: groupDoc.data().createdAt.toDate().toISOString(),
+      updatedAt: groupDoc.data().updatedAt.toDate().toISOString(),
+      
     };
   } catch (error) {
     throw err;
@@ -185,13 +189,49 @@ export async function inviteMember(userId, groupId, gmailInvite) {
       user_id: gmailInvite,
       role: "member",
       is_editor: false,
-      status: "active",
       joinedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     return {
       groupId,
       invitedUser: gmailInvite,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function removeMember(userId, groupId, memberId) {
+  try {
+    const groupRef = db.collection("groups").doc(groupId);
+    const groupDoc = await groupRef.get();
+
+    if (!groupDoc.exists) {
+      throw new Error("Group không tồn tại");
+    }
+
+    const groupData = groupDoc.data();
+
+    if (groupData.owner_id !== userId) {
+      throw new Error("Chỉ có chủ group mới được xóa thành viên");
+    }
+
+    if (userId === memberId) {
+      throw new Error("Không thể tự xóa bản thân");
+    }
+
+    const memberRef = groupRef.collection("members").doc(memberId);
+    const memberDoc = await memberRef.get();
+
+    if (!memberDoc.exists) {
+      throw new Error("Thành viên không tồn tại trong group");
+    }
+
+    await memberRef.delete();
+
+    return {
+      groupId,
+      removedMember: memberId,
     };
   } catch (error) {
     throw error;

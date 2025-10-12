@@ -138,3 +138,29 @@ export async function inviteMember(req, res) {
     });
   }
 }
+
+export async function removeMember(req, res) {
+  try {
+    const userId = req.email;
+    const { groupId, memberId } = req.body;
+
+    if (!groupId || !memberId) {
+      return res.status(400).json({
+        success: false,
+        error: "Thiếu groupId hoặc memberId",
+      });
+    }
+
+    const result = await groupService.removeMember(userId, groupId, memberId);
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error",
+    });
+  }
+}
