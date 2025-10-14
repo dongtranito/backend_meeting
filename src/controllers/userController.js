@@ -2,7 +2,7 @@ import fs from "fs";
 import { parseFile } from "music-metadata";
 import * as userService from "../services/userService.js";
 
-export async function handleSampleVoiceUpload(req, res) {
+export async function createSampleVoice(req, res) {
   try {
     const email = req.email;
     const file = req.file;
@@ -22,9 +22,16 @@ export async function handleSampleVoiceUpload(req, res) {
       return res.status(400).json({ error: "Audio phải <= 10 giây" });
     }
 
-    const result = await userService.uploadSampleVoice(email, file);
+    const result = await userService.createSampleVoice(email, file);
 
-    return res.json({ message: "success", ...result });
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...result,
+        duration: Number(duration.toFixed(2))
+      }
+    });
+
   } catch (error) {
     console.error("Error in controller:", error);
     return res.status(500).json({ error: error.message || "Server error" });

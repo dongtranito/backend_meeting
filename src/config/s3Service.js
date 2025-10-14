@@ -1,0 +1,45 @@
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import dotenv from "dotenv";
+dotenv.config();
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+//forder ở đây có 3 loại. sampleVoice, metadata, record
+export async function uploadToS3({ folder, fileName, fileBuffer, contentType }) {
+  if (!folder || !fileName) throw new Error("Thiếu folder hoặc fileName");
+
+  const key = `${folder}/${fileName}`;
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: contentType,
+    })
+  );
+
+  return {
+    key,
+    url: `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
+  };
+}
+
+// Helper: delete
+export async function deleteFromS3(folder, fileName) {
+  const key = `${folder}/${fileName}`;
+  await s3Client.send(
+    new DeleteObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: key,
+    })
+  );
+}
+
+export { s3Client };

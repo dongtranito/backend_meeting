@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import userRoutes from './routes/userRoutes.js';
 import groupRoutes from './routes/groupRoutes.js'
 import meetingRoutes1 from './routes/meetingRoutes1.js'
+import uploadRoute from './routes/uploadRoute.js'
 
 dotenv.config();
 
@@ -36,8 +37,7 @@ app.use('/', meetingRoutes)
 app.use('/', userRoutes);
 app.use('/', groupRoutes);
 app.use('/', meetingRoutes1);
-
-
+app.use('/upload',uploadRoute)
 
 
 

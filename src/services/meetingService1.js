@@ -1,4 +1,4 @@
-import { db, admin } from './firebaseService.js';
+import { db, admin } from '../config/firebaseService.js';
 
 export async function getListMeeting(userId, groupId) {
     try {
@@ -165,3 +165,4 @@ export async function updateMeeting(userId, meetingId, updateData) {
         throw new Error(error.message || "Không thể cập nhật cuộc họp");
     }
 }
+

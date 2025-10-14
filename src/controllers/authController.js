@@ -1,4 +1,4 @@
-import { admin, db } from '../services/firebaseService.js';
+import { admin, db } from '../config/firebaseService.js';
 import jwtService from '../services/jwtService.js';
 
 import dotenv from "dotenv";

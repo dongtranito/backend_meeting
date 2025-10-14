@@ -1,4 +1,4 @@
-import { db, admin } from './firebaseService.js';
+import { db, admin } from '../config/firebaseService.js';
 
 async function saveOrUpdateMeeting({ email, transcript, summaryData, bienBanData, meetingId,thoiGianKetThuc }) {
   const meetingData = {

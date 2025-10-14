@@ -1,4 +1,4 @@
-import { db, admin } from "./firebaseService.js";
+import { db, admin } from "../config/firebaseService.js";
 
 export async function getListGroup(userId) {
   try {

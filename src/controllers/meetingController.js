@@ -1,6 +1,6 @@
 import { generateBienBan, summarizeTranscript } from '../services/geminiService.js';
 import { saveOrUpdateMeeting } from '../services/meetingService.js';
-import { db, admin } from '../services/firebaseService.js';
+import { db, admin } from '../config/firebaseService.js';
 
 
 
