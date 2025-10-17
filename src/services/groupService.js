@@ -167,8 +167,18 @@ export async function getDetailGroup(groupId) {
 
 export async function inviteMember(userId, groupId, gmailInvite) {
   try {
+
     const groupRef = db.collection("groups").doc(groupId);
-    const groupDoc = await groupRef.get();
+    const userRef = db.collection("users").doc(gmailInvite);
+    const memberRef = groupRef.collection("members").doc(gmailInvite);
+
+    // 🔥 Chạy song song lấy dữ liệu group, user, member
+    const [groupDoc, userDoc, memberDoc] = await Promise.all([
+      groupRef.get(),
+      userRef.get(),
+      memberRef.get(),
+    ]);
+
     if (!groupDoc.exists) {
       throw new Error("Group not found");
     }
@@ -176,14 +186,14 @@ export async function inviteMember(userId, groupId, gmailInvite) {
       throw new Error("Chỉ có chủ group mới có quyền mời thành viên");
     }
 
-    const userRef = db.collection("users").doc(gmailInvite);
-    const userDoc = await userRef.get();
     if (!userDoc.exists) {
       throw new Error(`Không tồn tại user có gmail ${gmailInvite}`);
     }
 
-    const memberRef = groupRef.collection("members").doc(gmailInvite);
-    const memberDoc = await memberRef.get();
+    const userData = userDoc.data();
+    if (!userData.sampleVoice || userData.sampleVoice.trim() === "") {
+      throw new Error(`User ${gmailInvite} chưa có sampleVoice — không thể thêm vào group`);
+    }
 
     if (memberDoc.exists) {
       throw new Error("User đã là thành viên trong group");

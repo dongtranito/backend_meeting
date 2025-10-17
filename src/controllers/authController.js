@@ -54,7 +54,7 @@ const login = async (req, res) => {
 };
 
 const refreshToken = (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies.refreshToken || req.headers['authorization']?.split(' ')[1];
     if (!refreshToken) {
         return res.status(401).json({ message: "Không có refresh token" });
     }
