@@ -231,7 +231,6 @@ export async function updateMemberGroup(req, res) {
     });
   }
 }
-
 // import { mergeGroupVoicesUtil } from "../utils/mergeAudio.js";  // cái này để test api mergeAudio
 // export async function mergeAudio(req, res) {
 //   try {

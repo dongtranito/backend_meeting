@@ -1,4 +1,5 @@
 import { db, admin } from "../config/firebaseService.js";
+import { mergeGroupVoicesUtil } from "../utils/mergeAudio.js";
 
 export async function getListGroup(userId) {
   try {
@@ -216,6 +217,9 @@ export async function inviteMember(userId, groupId, gmailInvite, name) {
       joinedAt: admin.firestore.FieldValue.serverTimestamp(),
       name
     });
+    Promise.resolve(mergeGroupVoicesUtil(groupId))
+      .then(() => console.log(` Tạo ra được mergevoice của group thành công  ${groupId}`))
+      .catch(err => console.error(`không tạo ra được mergevoice của group ${groupId}:`, err.message));
 
     return {
       groupId,
@@ -263,6 +267,14 @@ export async function updateMemberData(userId, groupId, memberEmail, newData) {
 
 
     await memberRef.update(updates);
+
+    if (newData.name !== undefined) {
+      Promise.resolve(mergeGroupVoicesUtil(groupId))
+        .then(() => console.log(` Tạo ra được mergevoice của group thành công  ${groupId}`))
+        .catch(err => console.error(`không tạo ra được mergevoice của group ${groupId}:`, err.message));
+    }
+
+
     return {
       groupId,
       memberEmail,
@@ -301,6 +313,10 @@ export async function removeMember(userId, groupId, memberId) {
     }
 
     await memberRef.delete();
+    Promise.resolve(mergeGroupVoicesUtil(groupId))
+      .then(() => console.log(` Tạo ra được mergevoice của group thành công  ${groupId}`))
+      .catch(err => console.error(`không tạo ra được mergevoice của group ${groupId}:`, err.message));
+
 
     return {
       groupId,
@@ -334,6 +350,9 @@ export async function leaveGroup(userId, groupId) {
     }
 
     await memberRef.delete();
+    Promise.resolve(mergeGroupVoicesUtil(groupId))
+      .then(() => console.log(` Tạo ra được mergevoice của group thành công  ${groupId}`))
+      .catch(err => console.error(`không tạo ra được mergevoice của group ${groupId}:`, err.message));
 
     return {
       message: "Rời group thành công",
