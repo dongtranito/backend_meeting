@@ -8,7 +8,8 @@ import {
     getDetailGroup,
     inviteMember,
     removeMember,
-    leaveGroup
+    leaveGroup,
+    updateMemberGroup
 } from '../controllers/groupController.js'
 
 const router = express.Router();
@@ -23,4 +24,5 @@ router.get("/detail-group/:groupId", getDetailGroup);   // cái này là lấy d
 router.post("/invite-member", inviteMember);
 router.delete('/remove-member', removeMember);
 router.post('/leave-group', leaveGroup);
+router.put('/update-member', updateMemberGroup);
 export default router;

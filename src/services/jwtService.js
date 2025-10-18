@@ -4,7 +4,7 @@ const ACCESS_SECRET = "ACCESS_SECRET_KEY";
 const REFRESH_SECRET = "REFRESH_SECRET_KEY";
 
 const createAccessToken = (email) => {
-  return jwt.sign({ email }, ACCESS_SECRET, { expiresIn: "15m" });
+  return jwt.sign({ email }, ACCESS_SECRET, { expiresIn: "30m" });
 };
 
 const createRefreshToken = (email) => {

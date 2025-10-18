@@ -70,7 +70,7 @@ const refreshToken = (req, res) => {
             secure: true,
         });
 
-        res.json({ message: "Refresh thành công", accessKey: newAccessToken });
+        res.json({ message: "Refresh thành công", accessKey: newAccessToken , email: decoded.email});
     } catch (err) {
         res.status(403).json({ message: "Refresh token không hợp lệ" });
     }

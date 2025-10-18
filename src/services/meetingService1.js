@@ -158,8 +158,12 @@ export async function updateMeeting(userId, meetingId, updateData) {
             scheduledAt: updatedDoc.data().scheduledAt
                 ? updatedDoc.data().scheduledAt.toDate().toISOString()
                 : null,
-            createdAt: doc.data().createdAt.toDate().toISOString(),
-            updatedAt: doc.data().updatedAt.toDate().toISOString(),
+            createdAt: updatedDoc.data().createdAt
+                ? updatedDoc.data().createdAt.toDate().toISOString()
+                : null,
+            updatedAt: updatedDoc.data().updatedAt
+                ? updatedDoc.data().updatedAt.toDate().toISOString()
+                : null,
         };
     } catch (error) {
         throw new Error(error.message || "Không thể cập nhật cuộc họp");

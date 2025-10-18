@@ -19,6 +19,7 @@ export async function getListGroup(userId) {
           createdAt: groupData.createdAt?.toDate().toISOString() || null,
           updatedAt: groupData.updatedAt?.toDate().toISOString() || null,
         });
+        continue;
       }
 
       const membersRef = groupDoc.ref.collection("members");
@@ -45,6 +46,13 @@ export async function getListGroup(userId) {
 
 export async function createGroup(userId, group) {
   try {
+
+    const userRef = db.collection("users").doc(userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+    if (!userData.sampleVoice || userData.sampleVoice.trim() === "") {
+      throw new Error("User chưa có sampleVoice — không thể tạo group");
+    }
     const newGroupRef = db.collection("groups").doc();
     const groupData = {
       name: group.name,
@@ -60,6 +68,7 @@ export async function createGroup(userId, group) {
       role: "owner",
       is_editor: true,
       joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+      name: group.nameOwner,
     });
 
     return {
@@ -129,6 +138,8 @@ export async function updateGroup(userId, groupId, updateData) {
       groupId,
       ...groupData,
       ...updatedData,
+      createdAt: groupData.createdAt?.toDate().toISOString() || null,
+      updatedAt: groupData.updatedAt?.toDate().toISOString() || null,
     };
   } catch (err) {
     throw err;
@@ -165,7 +176,7 @@ export async function getDetailGroup(groupId) {
   }
 }
 
-export async function inviteMember(userId, groupId, gmailInvite) {
+export async function inviteMember(userId, groupId, gmailInvite, name) {
   try {
 
     const groupRef = db.collection("groups").doc(groupId);
@@ -203,11 +214,60 @@ export async function inviteMember(userId, groupId, gmailInvite) {
       role: "member",
       is_editor: false,
       joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+      name
     });
 
     return {
       groupId,
       invitedUser: gmailInvite,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function updateMemberData(userId, groupId, memberEmail, newData) {
+  try {
+    const groupRef = db.collection("groups").doc(groupId);
+    const memberRef = groupRef.collection("members").doc(memberEmail);
+
+    const [groupDoc, memberDoc] = await Promise.all([
+      groupRef.get(),
+      memberRef.get(),
+    ]);
+
+    if (!groupDoc.exists) {
+      throw new Error("Group không tồn tại");
+    }
+
+    const groupData = groupDoc.data();
+    if (groupData.owner_id !== userId) {
+      throw new Error("Chỉ chủ group mới được phép sửa tên thành viên");
+    }
+
+    if (!memberDoc.exists) {
+      throw new Error("Thành viên không tồn tại trong group này");
+    }
+
+    const updates = {
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (newData.is_editor !== undefined) {
+      updates.is_editor = newData.is_editor;
+    }
+
+    if (newData.name !== undefined) {
+      updates.name = newData.name;
+    }
+
+
+    await memberRef.update(updates);
+    return {
+      groupId,
+      memberEmail,
+      updatedName: newData.name,
+      message: "Đã cập nhật dữ liệu thành viên thành công",
     };
   } catch (error) {
     throw error;
