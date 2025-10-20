@@ -9,7 +9,7 @@ dotenv.config();
 
 export async function createSampleVoice(email, file) {
   try {
-    const fileNameOnS3 = `${email}.wav`;
+    const fileNameOnS3 = `${email}.mp3`;
     const fileBuffer = fs.readFileSync(file.path);
     const { url } = await uploadToS3({
       folder: "sample_voice",

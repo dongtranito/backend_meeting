@@ -32,14 +32,17 @@ export async function uploadToS3({ folder, fileName, fileBuffer, contentType }) 
 }
 
 // Helper: delete
-export async function deleteFromS3(folder, fileName) {
-  const key = `${folder}/${fileName}`;
-  await s3Client.send(
-    new DeleteObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: key,
-    })
-  );
-}
 
-export { s3Client };
+export async function deleteFromS3(fileUrl) {
+  try {
+    const bucketName = process.env.S3_BUCKET_NAME;
+
+    // 🧩 Tách phần key sau ".amazonaws.com/"
+    const key = fileUrl.split(".amazonaws.com/")[1];
+    if (!key) throw new Error("Không thể trích xuất key từ URL");
+
+    await s3Client.send(new DeleteObjectCommand({ Bucket: bucketName, Key: key }));
+  } catch (err) {
+    throw err;
+  }
+}
