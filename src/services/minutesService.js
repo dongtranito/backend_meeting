@@ -2,7 +2,7 @@ import axios from "axios";
 import dotenv from "dotenv";
 import { mergeGroupAndAudio } from "../utils/mergeAudio.js"
 import { db } from "../config/firebaseService.js";
-import {deleteFromS3 } from "../config/s3Service.js"
+import { deleteFromS3 } from "../config/s3Service.js"
 dotenv.config();
 
 export async function createTranscript(userId, groupId, audioUrl) {
@@ -109,7 +109,6 @@ export async function createTranscript(userId, groupId, audioUrl) {
         transcriptUrl,
         text,        // đoạn text đầy đủ kiểu Azure
         segments,    // danh sách segment để hiển thị linh hoạt
-
       };
     }
   }
@@ -136,19 +135,18 @@ function extractTranscriptSegments(jsonData, speakerMap, totalTime) {
     return `${m}:${s}`;
   };
 
-  const segments = jsonData.recognizedPhrases.map((p) => {
-    const startSec = ticksToSeconds(p.offsetInTicks || 0);
-    const time = formatTime(startSec);
-    const text = p.nBest?.[0]?.display || "";
-    const found = speakerMap.find((m) => m.id === p.speaker);
-    return {
-      start: time,
-      startSec,
-      text,
-      speaker: found ? found.name : `unknow, Speaker ${p.speaker || 0}`,
-    };
-  })
-    .filter((seg) => seg.startSec >= totalTime);
-
+  const segments = jsonData.recognizedPhrases
+    .filter(p => ticksToSeconds(p.offsetInTicks || 0) >= totalTime)
+    .map((p) => {
+      const startSec = ticksToSeconds(p.offsetInTicks || 0);
+      const time = formatTime(startSec);
+      const text = p.nBest?.[0]?.display || "";
+      const found = speakerMap.find((m) => m.id === p.speaker);
+      return {
+        start: time,
+        text,
+        speaker: found ? found.name : `unknow, Speaker ${p.speaker || 0}`,
+      };
+    })
   return segments;
 }
