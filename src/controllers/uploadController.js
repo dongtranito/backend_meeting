@@ -1,50 +1,8 @@
 import fs from "fs";
 import { uploadToS3, deleteFromS3 } from "../config/s3Service.js";
 import { parseFile } from "music-metadata";
+import {extractPlaceholdersWithDocx} from "../utils/generateMinute.js"
 
-// import { extractTextFromPdf } from "../utils/pdfParser.js";
-
-// export async function uploadSampleVoice(req, res) {
-//   try {
-//     const email = req.email; 
-//     const file = req.file;
-
-//     if (!file) {
-//       return res.status(400).json({ success: false, error: "Chưa có file audio" });
-//     }
-
-//     if (!file.mimetype.startsWith("audio/")) {
-//       await fs.promises.unlink(file.path);
-//       return res.status(400).json({ success: false, error: "File phải là audio" });
-//     }
-
-//     // Đọc file buffer
-//     const buffer = fs.readFileSync(file.path);
-
-//     // Upload lên S3
-//     const { url } = await uploadToS3({
-//       folder: "sample_voice",
-//       fileName: `${email}.wav`,
-//       fileBuffer: buffer,
-//       contentType: file.mimetype,
-//     });
-
-//     // Xoá file tạm
-//     await fs.promises.unlink(file.path);
-
-//     return res.status(200).json({
-//       success: true,
-//       data: { url },
-//     });
-
-//   } catch (error) {
-//     console.error("Upload sample voice error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: error.message || "Lỗi server khi upload audio",
-//     });
-//   }
-// }
 
 export async function uploadMetadata(req, res) {
     try {
@@ -132,28 +90,56 @@ export async function uploadRecord(req, res) {
         });
     }
 }
-// export async function deleteFile(req, res) {
-//   try {
-//     const { folder, fileName } = req.body;
+export async function uploadSampleMinute(req, res) {
+    try {
+        const file = req.file;
 
-//     if (!folder || !fileName) {
-//       return res.status(400).json({
-//         success: false,
-//         error: "Thiếu folder hoặc fileName",
-//       });
-//     }
+        if (!file) {
+            return res.status(400).json({ success: false, error: "Chưa có file DOCX" });
+        }
 
-//     await deleteFromS3(folder, fileName);
+        // ✅ Kiểm tra MIME type cho docx
+        if (
+            file.mimetype !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ) {
+            await fs.promises.unlink(file.path);
+            return res.status(400).json({ success: false, error: "File phải là định dạng DOCX" });
+        }
 
-//     return res.status(200).json({
-//       success: true,
-//       message: "Xoá file khỏi S3 thành công",
-//     });
-//   } catch (error) {
-//     console.error("Delete file error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: error.message || "Lỗi server khi xoá file",
-//     });
-//   }
-// }
+        // Khúc này là check thử file có hợp lệ không 
+        const buffer = fs.readFileSync(file.path);
+         try {
+            await extractPlaceholdersWithDocx(buffer);
+        } catch (err) {
+            await fs.promises.unlink(file.path);
+            return res.status(400).json({
+                success: false,
+                error: err.message,
+            });
+        }
+
+        // Khúc này là upload lên s3
+        const { url } = await uploadToS3({
+            folder: "sampleMinute",
+            fileName: file.originalname,
+            fileBuffer: buffer,
+            contentType: file.mimetype,
+        });
+
+        // Xóa file tạm sau khi upload xong
+        await fs.promises.unlink(file.path);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                url,
+            },
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.message || "Lỗi server khi upload biên bản DOCX",
+        });
+    }
+}

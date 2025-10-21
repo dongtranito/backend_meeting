@@ -10,7 +10,7 @@ const s3Client = new S3Client({
   },
 });
 
-//forder ở đây có 4 loại. sampleVoice, metadata, record, groupSampleVoice
+//forder ở đây có 5 loại. sampleVoice, metadata, record, groupSampleVoice, sampleMinute
 export async function uploadToS3({ folder, fileName, fileBuffer, contentType }) {
   if (!folder || !fileName) throw new Error("Thiếu folder hoặc fileName");
 
