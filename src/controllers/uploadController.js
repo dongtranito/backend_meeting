@@ -1,8 +1,8 @@
 import fs from "fs";
 import { uploadToS3, deleteFromS3 } from "../config/s3Service.js";
 import { parseFile } from "music-metadata";
-import {extractPlaceholdersWithDocx} from "../utils/generateMinute.js"
-
+import { extractPlaceholdersWithDocx } from "../utils/generateMinute.js";
+import * as uploadService from "../services/uploadService.js";
 
 export async function uploadMetadata(req, res) {
     try {
@@ -16,13 +16,6 @@ export async function uploadMetadata(req, res) {
             await fs.promises.unlink(file.path);
             return res.status(400).json({ success: false, error: "File phải là PDF" });
         }
-
-        // let text = "";
-        // try {
-        //     text = await extractTextFromPdf(file.path);
-        // } catch (e) {
-        //     console.warn("Không đọc được nội dung PDF:", e.message);
-        // }
 
         const buffer = fs.readFileSync(file.path);
         const { url } = await uploadToS3({
@@ -53,17 +46,20 @@ export async function uploadMetadata(req, res) {
 export async function uploadRecord(req, res) {
     try {
         const file = req.file;
-
+        const { meetingId } = req.body;
+        const userId = req.email;
         if (!file) {
             return res.status(400).json({ success: false, error: "Chưa có file audio" });
         }
-
+        if (!meetingId) {
+            return res.status(400).json({ success: false, error: "thiếu meetingId" });
+        }
         if (!file.mimetype.startsWith("audio/")) {
             await fs.promises.unlink(file.path);
             return res.status(400).json({ success: false, error: "File phải là dạng audio" });
         }
-        const metadata = await parseFile(file.path);
-        const duration = metadata.format.duration || 0;
+        // const metadata = await parseFile(file.path);
+        // const duration = metadata.format.duration || 0;
         const buffer = fs.readFileSync(file.path);
 
         const { url } = await uploadToS3({
@@ -72,16 +68,12 @@ export async function uploadRecord(req, res) {
             fileBuffer: buffer,
             contentType: file.mimetype,
         });
-        await fs.promises.unlink(file.path);
+        const result = await uploadService.uploadRecord(userId,meetingId,url)
+        fs.promises.unlink(file.path);
         return res.status(200).json({
             success: true,
             message: "Upload record thành công",
-            data: {
-                url,
-                name: file.originalname,
-                duration: Number(duration.toFixed(0)),
-                type: file.mimetype,
-            },
+            data: result
         });
     } catch (error) {
         return res.status(500).json({
@@ -93,9 +85,13 @@ export async function uploadRecord(req, res) {
 export async function uploadSampleMinute(req, res) {
     try {
         const file = req.file;
-
+        const { meetingId } = req.body;
+        const userId = req.email;
         if (!file) {
             return res.status(400).json({ success: false, error: "Chưa có file DOCX" });
+        }
+        if (!meetingId) {
+            return res.status(400).json({ success: false, error: "thiếu meetingId" });
         }
 
         // ✅ Kiểm tra MIME type cho docx
@@ -108,7 +104,7 @@ export async function uploadSampleMinute(req, res) {
 
         // Khúc này là check thử file có hợp lệ không 
         const buffer = fs.readFileSync(file.path);
-         try {
+        try {
             await extractPlaceholdersWithDocx(buffer);
         } catch (err) {
             await fs.promises.unlink(file.path);
@@ -126,14 +122,14 @@ export async function uploadSampleMinute(req, res) {
             contentType: file.mimetype,
         });
 
+        const result =await uploadService.uploadSampleMinute(userId,meetingId, url);
+
         // Xóa file tạm sau khi upload xong
-        await fs.promises.unlink(file.path);
+        fs.promises.unlink(file.path);
 
         return res.status(200).json({
             success: true,
-            data: {
-                url,
-            },
+            data: result
         });
 
     } catch (error) {
