@@ -1,5 +1,6 @@
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+
 export async function extractPlaceholdersWithDocx(buffer) {
     try {
         const zip = new PizZip(buffer);

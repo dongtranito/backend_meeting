@@ -1,28 +1,29 @@
 import axios from "axios";
 import dotenv from "dotenv";
 import { mergeGroupAndAudio } from "../utils/mergeAudio.js"
-import { db } from "../config/firebaseService.js";
+import { db, admin } from "../config/firebaseService.js";
 import { deleteFromS3 } from "../config/s3Service.js"
 dotenv.config();
 
-export async function createTranscript(userId, groupId, audioUrl) {
+export async function createTranscript(userId, meetingId, audioUrl) {
   const {
     AZURE_SPEECH_KEY,
     AZURE_SPEECH_ENDPOINT,
     AZURE_SPEECH_MODEL,
   } = process.env;
+  const meetingRef = db.collection("meetings").doc(meetingId);
+  const meetingDoc = await meetingRef.get();
 
-  const groupRef = db.collection("groups").doc(groupId);
-  const groupDoc = await groupRef.get();
-
-  if (!groupDoc.exists) {
-    throw new Error("Không tồn tại group");
+  if (!meetingDoc.exists) {
+    throw new Error("Không tồn tại meeting");
   }
 
-  const groupData = groupDoc.data();
-  if (groupData.owner_id !== userId) {
-    throw new Error("chỉ có chủ group mới có quyền tạo transcript");
+  const meetingData = meetingDoc.data();
+
+  if (meetingData.owner_id !== userId) {
+    throw new Error("Chỉ chủ cuộc họp mới có quyền tạo transcript");
   }
+  const groupId = meetingData.group_id;
 
   const {
     url,
@@ -104,6 +105,13 @@ export async function createTranscript(userId, groupId, audioUrl) {
         (s) => `[${s.speaker} ${s.start}] ${s.text}`
       ).join("\n");
       deleteFromS3(url);
+      await meetingRef.update({
+        transcript: {
+          text,
+          segments,
+        },
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
       return {
         status: "Succeeded",
         transcriptUrl,
