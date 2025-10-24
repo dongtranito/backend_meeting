@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import { mergeGroupAndAudio } from "../utils/mergeAudio.js"
 import { db, admin } from "../config/firebaseService.js";
 import { deleteFromS3 } from "../config/s3Service.js"
+import { generateMinute } from "../utils/generateMinute.js"
+
 dotenv.config();
 
 export async function createTranscript(userId, meetingId, audioUrl) {
@@ -59,11 +61,11 @@ export async function createTranscript(userId, meetingId, audioUrl) {
 
   // 3️⃣ Poll trạng thái job
   let status = "NotStarted";
-  const maxAttempts = 60; // tối đa 30 lần (mỗi lần 10s => 5 phút)
+  const maxAttempts = 200; // tối đa 200 lần (mỗi lần 5s => 1000s)
   let attempt = 0;
 
   while (attempt < maxAttempts && status !== "Succeeded" && status !== "Failed") {
-    await new Promise((r) => setTimeout(r, 5000)); // đợi 10s
+    await new Promise((r) => setTimeout(r, 5000)); // đợi 5
     attempt++;
 
     const statusRes = await axios.get(transcriptUrl, {
@@ -113,24 +115,13 @@ export async function createTranscript(userId, meetingId, audioUrl) {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return {
-        status: "Succeeded",
-        transcriptUrl,
         text,        // đoạn text đầy đủ kiểu Azure
         segments,    // danh sách segment để hiển thị linh hoạt
       };
     }
   }
 
-  // 6️⃣ Nếu Azure chưa xong
-  return {
-    status,
-    transcriptUrl,
-    text: null,
-    message:
-      status === "Failed"
-        ? "Azure xử lý thất bại"
-        : "Quá thời gian chờ, transcript chưa hoàn tất",
-  };
+  throw new Error("không tạo được transcript");
 }
 
 function extractTranscriptSegments(jsonData, speakerMap, totalTime) {
@@ -158,3 +149,42 @@ function extractTranscriptSegments(jsonData, speakerMap, totalTime) {
     })
   return segments;
 }
+
+export async function createMinute(userId, meetingId, audioUrl) {
+  try {
+    const meetingRef = db.collection("meetings").doc(meetingId);
+    const meetingDoc = await meetingRef.get();
+
+    if (!meetingDoc.exists) {
+      throw new Error("Không tồn tại meeting");
+    }
+
+    const meetingData = meetingDoc.data();
+
+    if (meetingData.owner_id !== userId) {
+      throw new Error("Chỉ chủ cuộc họp mới có quyền tạo transcript");
+    }
+    if (!meetingData.minutes?.sampleMinute) {
+      throw new Error("Chưa có biên bản mẫu");
+    }
+    const transcript = await createTranscript(userId, meetingId, audioUrl);  //trả về {text, segments} text là transcript á
+    const data = {
+      urlSampleMinute: meetingData.minutes.sampleMinute,
+      title: meetingData.title || "",
+      description: meetingData.description || "",
+      scheduledAt: meetingData.scheduledAt.toDate().toISOString() || "",
+      transcriptText: transcript.text || "",
+      metaData: meetingData.meta_data || {},
+    };
+    const result = await generateMinute(data);
+    await meetingRef.update({
+      "minutes.officeMinute": result.url,
+      "minutes.placeholder": result.aiResult,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return result
+  } catch (error) {
+    throw new Error(error.message || "Không tạo được biên bản");
+  }
+}
+

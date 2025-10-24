@@ -41,7 +41,7 @@ export async function uploadSampleMinute(userId, meetingId, url) {
             throw new Error("Chỉ chủ cuộc họp mới được phép upload biên bản mẫu");
         }
         await meetingRef.update({
-            "minutes.sampleMinutes": url,
+            "minutes.sampleMinute": url,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
         return {
@@ -66,7 +66,7 @@ export async function uploadOfficeMinute(userId, meetingId, url) {
             throw new Error("Chỉ chủ cuộc họp mới được phép upload biên bản");
         }
         await meetingRef.update({
-            "minutes.officialMinutes": url,
+            "minutes.officialMinute": url,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
         return {

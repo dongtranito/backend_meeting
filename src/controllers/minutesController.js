@@ -25,3 +25,27 @@ export async function createTranscript(req, res) {
     }
 
 }
+
+export async function createMinute(req, res) {
+    try {
+        const { url, meetingId } = req.body;
+        const userId = req.email;
+        if (!meetingId || !url) {
+            return res.status(400).json({
+                success: false,
+                error: "Thiếu trường meetingId hoặc thiếu url trong body",
+            });
+        }
+        const result = await minutesService.createMinute(userId, meetingId, url);
+        return res.status(200).json({
+            success: true,
+            message: "Tạo biên bản thành công",
+            data: result,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.response?.data || error.message || "Lỗi khi tạo biên bản",
+        });
+    }
+}
