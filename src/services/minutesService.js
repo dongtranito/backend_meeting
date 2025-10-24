@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 import { mergeGroupAndAudio } from "../utils/mergeAudio.js"
 import { db, admin } from "../config/firebaseService.js";
 import { deleteFromS3 } from "../config/s3Service.js"
-import { generateMinute } from "../utils/generateMinute.js"
-
+import { generateMinute, loadDocxBufferFromUrl, renderDocx } from "../utils/generateMinute.js"
+import {uploadToS3} from "../config/s3Service.js"
 dotenv.config();
 
 export async function createTranscript(userId, meetingId, audioUrl) {
@@ -188,3 +188,65 @@ export async function createMinute(userId, meetingId, audioUrl) {
   }
 }
 
+export async function getMinute(userId, meetingId) {
+  try {
+    const meetingRef = db.collection("meetings").doc(meetingId);
+    const meetingDoc = await meetingRef.get();
+    if (!meetingDoc.exists) {
+      throw new Error("Không tồn tại cuộc họp");
+    }
+    const meetingData = meetingDoc.data();
+    const groupId = meetingData.group_id;
+    const groupRef = db.collection("groups").doc(groupId);
+    const groupDoc = await groupRef.get();
+    if (!groupDoc.exists) {
+      throw new Error("Không tồn tại group");
+    }
+
+    const memberRef = groupRef.collection("members").doc(userId);
+    const memberDoc = await memberRef.get();
+    if (!memberDoc.exists) {
+      throw new Error("User không thuộc group này, không có quyền xem biên bản");
+    }
+    const minute = meetingData.minutes;
+    return minute
+  } catch (error) {
+    throw new Error(error.message || "Lỗi khi lấy biên bản");
+  }
+}
+export async function updateMinute(userId, meetingId, placeholder) {
+  try {
+    const meetingRef = db.collection("meetings").doc(meetingId);
+    const meetingDoc = await meetingRef.get();
+
+    if (!meetingDoc.exists) {
+      throw new Error("Không tồn tại cuộc họp");
+    }
+
+    const meetingData = meetingDoc.data();
+    if (meetingData.owner_id !== userId) {
+      throw new Error("Chỉ chủ cuộc họp mới được phép sửa minute");
+    }
+    const buffer = await loadDocxBufferFromUrl(meetingData.minutes.sampleMinute);
+    const outputBuffer = await renderDocx(buffer, placeholder);
+    const fileName = `minute_updated_${Date.now()}.docx`;
+    const { url } = await uploadToS3({
+      folder: "officeMinute",
+      fileName,
+      fileBuffer: outputBuffer,
+      contentType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    await meetingRef.update({
+      "minutes.officeMinute": url,
+      "minutes.placeholder": placeholder,  // chỗ này là lấy cái placehoder kiểu {ngay: 20, thang: 2} đưa hết vào ghi đè luôn 
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return {
+      success: true,
+      newUrl: url,
+    };
+  } catch (error) {
+    throw new Error(error.message || "Lỗi khi cập nhật biên bản");
+  }
+}

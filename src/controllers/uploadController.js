@@ -64,7 +64,7 @@ export async function uploadRecord(req, res) {
 
         const { url } = await uploadToS3({
             folder: "record",
-            fileName: `${file.originalname}${meetingId}`,
+            fileName: `${file.originalname}${meetingId}.mp3`,
             fileBuffer: buffer,
             contentType: file.mimetype,
         });
@@ -117,7 +117,7 @@ export async function uploadSampleMinute(req, res) {
         // Khúc này là upload lên s3
         const { url } = await uploadToS3({
             folder: "sampleMinute",
-            fileName: `${file.originalname}${meetingId}`,
+            fileName: `${file.originalname}${meetingId}.docx`,
             fileBuffer: buffer,
             contentType: file.mimetype,
         });

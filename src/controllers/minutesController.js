@@ -49,3 +49,51 @@ export async function createMinute(req, res) {
         });
     }
 }
+export async function getMinute(req, res) {
+    try {
+        const {meetingId } = req.params;
+        const userId = req.email;
+        if (!meetingId) {
+            return res.status(400).json({
+                success: false,
+                error: "Thiếu trường meetingId ở params",
+            });
+        }
+        const result = await minutesService.getMinute(userId, meetingId);
+        return res.status(200).json({
+            success: true,
+            message: "lấy biên bản thành công",
+            data: result,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.response?.data || error.message || "Lỗi khi tạo biên bản",
+        });
+    }
+}
+
+export async function updateMinute(req, res) {
+    try {
+        const {meetingId } = req.params;
+        const userId = req.email;
+        const {placeholder} =req.body;
+        if (!meetingId || !placeholder) {
+            return res.status(400).json({
+                success: false,
+                error: "Thiếu trường meetingId ở params hoặc placeholder ở body",
+            });
+        }
+        const result = await minutesService.updateMinute(userId, meetingId, placeholder);
+        return res.status(200).json({
+            success: true,
+            message: "update biên bản thành công ",
+            data: result,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.response?.data || error.message || "Lỗi khi tạo biên bản",
+        });
+    }
+}

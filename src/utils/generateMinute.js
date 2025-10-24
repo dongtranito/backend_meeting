@@ -30,19 +30,19 @@ export async function extractPlaceholdersWithDocx(buffer) {
     }
 }
 
-async function loadDocxBufferFromUrl(url) {
+export async function loadDocxBufferFromUrl(url) {
     const res = await axios.get(url, { responseType: "arraybuffer" });
     return Buffer.from(res.data);
 }
 // Đây là data được gởi để tạo transcript
-    // const data = {
-    //   urlSampleMinute: meetingData.minutes.sampleMinute,
-    //   title: meetingData.title || "",
-    //   description: meetingData.description || "",
-    //   scheduledAt: meetingData.scheduledAt.toDate().toISOString() || "",
-    //   transcriptText: transcript.text || "",
-    //   metaData: meetingData.meta_data || {},
-    // };
+// const data = {
+//   urlSampleMinute: meetingData.minutes.sampleMinute,
+//   title: meetingData.title || "",
+//   description: meetingData.description || "",
+//   scheduledAt: meetingData.scheduledAt.toDate().toISOString() || "",
+//   transcriptText: transcript.text || "",
+//   metaData: meetingData.meta_data || {},
+// };
 async function askAiToGenerateData(templateText, placeholders, data) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("⚠️ GEMINI_API_KEY not set in .env");
@@ -92,11 +92,12 @@ Ví dụ định dạng:
     const result = await model.invoke([{ role: "user", content: prompt }]);
     return result;
 }
-async function renderDocx(buffer) {
+export async function renderDocx(buffer, placeholder) {
     const zip = new PizZip(buffer);
     const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
-    doc.render(aiResult);
-    fs.writeFileSync("./output5555.docx", doc.getZip().generate({ type: "nodebuffer" }));
+    doc.render(placeholder);
+    const outputBuffer = doc.getZip().generate({ type: "nodebuffer" });
+    return outputBuffer;
 }
 
 export async function generateMinute(data) {
@@ -108,11 +109,7 @@ export async function generateMinute(data) {
         const placeholders = await extractPlaceholdersWithDocx(buffer);
 
         const aiResult = await askAiToGenerateData(templateText, placeholders, data);
-
-        const zip = new PizZip(buffer);
-        const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
-        doc.render(aiResult);
-        const outputBuffer = doc.getZip().generate({ type: "nodebuffer" });  // có nghĩa là render xong rồi mới buffer của nó
+        const outputBuffer = await renderDocx (buffer,aiResult) // có nghĩa là render xong rồi mới buffer của nó
 
         const fileName = `minute_${Date.now()}.docx`;
         const { url } = await uploadToS3({
