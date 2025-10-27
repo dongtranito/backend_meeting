@@ -138,3 +138,26 @@ export async function send2Sign(req, res) {
         });
     }
 }
+
+export async function getListSampleMinutes(req, res) {
+  try {
+    const userId = req.email;
+    const { meetingId } = req.params;
+
+    if (!meetingId) {
+      return res.status(400).json({ success: false, error: "Thiếu meetingId" });
+    }
+
+    const result = await minutesService.getListSampleMinutes(userId, meetingId);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Lỗi server khi lấy danh sách biên bản mẫu",
+    });
+  }
+}

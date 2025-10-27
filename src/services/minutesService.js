@@ -237,7 +237,7 @@ export async function updateMinute(userId, meetingId, placeholder) {
     if (meetingData.owner_id !== userId) {
       throw new Error("Chỉ chủ cuộc họp mới được phép sửa minute");
     }
-    
+
     if (meetingData.status && meetingData.status === "signed") {
       throw new Error("Cuộc họp đã được ký, không thể chỉnh sửa");
     }
@@ -321,5 +321,42 @@ export async function send2Sign(userId, meetingId, signerEmails) {
     return envelopeId
   } catch (error) {
     throw new Error(error.message || "Lỗi gởi biên bản để ký");
+  }
+}
+
+export async function getListSampleMinutes(userId, meetingId) {
+  try {
+    const meetingRef = db.collection("meetings").doc(meetingId);
+    const meetingDoc = await meetingRef.get();
+
+    if (!meetingDoc.exists) {
+      throw new Error("Không tồn tại cuộc họp");
+    }
+
+    const meetingData = meetingDoc.data();
+    if (meetingData.owner_id !== userId) {
+      throw new Error("Chỉ chủ cuộc họp mới được phép lấy danh sách biên bản mẫu ");
+    }
+
+    const groupId = meetingData.group_id;
+
+    const meetingsSnap = await db
+      .collection("meetings")
+      .where("group_id", "==", groupId)
+      .get();
+
+    const sampleMinutes = [];
+    meetingsSnap.forEach((doc) => {
+      const data = doc.data();
+      if (data.minutes?.sampleMinute) {
+        sampleMinutes.push(data.minutes.sampleMinute)
+      }
+    });
+    return {
+      total: sampleMinutes.length,
+      sampleMinutes
+    };
+  } catch (error) {
+    throw new Error(error.message || "Lỗi khi cập nhật biên bản");
   }
 }
