@@ -3,11 +3,9 @@ export async function getListMeeting(req, res) {
     try {
         const userId = req.email;
         const { groupId } = req.query;
-        console.log (userId)
         if (!groupId) {
             return res.status(400).json({ error: "Thiếu grouopId " });
         }
-        console.log(groupId)
         const meetings = await meetingService.getListMeeting(userId, groupId);
         return res.status(200).json({
             success: true,
@@ -115,5 +113,29 @@ export async function updateMeeting(req, res) {
     }
 }
 
+export async function getMeeting(req, res) {
+    try {
+        const userId = req.email;
+        const { meetingId } = req.params; // URL: /meetings/:meetingId
 
-// Thiếu một cái lấy chi tiết cuộc họp
+        if (!meetingId) {
+            return res.status(400).json({
+                success: false,
+                error: "Thiếu meetingId",
+            });
+        }
+
+        const result = await meetingService.getMeeting(userId, meetingId);
+
+        return res.status(200).json({
+            success: true,
+            data: result,
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.message || "Internal server error",
+        });
+    }
+}

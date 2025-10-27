@@ -11,7 +11,6 @@ export async function getListMeeting(userId, groupId) {
 
         const memberRef = groupRef.collection("members").doc(userId);
         const memberDoc = await memberRef.get();
-        console.log("hihi", memberDoc.data())
         if (!memberDoc.exists) {
             throw new Error("User không thuộc group này, không có quyền xem danh sách cuộc họp");
         }
@@ -124,7 +123,7 @@ export async function updateMeeting(userId, meetingId, updateData) {
         if (meetingData.owner_id !== userId) {
             throw new Error("Chỉ chủ cuộc họp mới được phép sửa");
         }
-        
+
         if (meetingData.status && meetingData.status === "signed") {
             throw new Error("Cuộc họp đã được ký, không thể chỉnh sửa");
         }
@@ -165,3 +164,47 @@ export async function updateMeeting(userId, meetingId, updateData) {
     }
 }
 
+export async function getMeeting(userId, meetingId) {
+    try {
+        const meetingRef = db.collection("meetings").doc(meetingId);
+        const meetingDoc = await meetingRef.get();
+        if (!meetingDoc.exists) {
+            throw new Error("Không tồn tại cuộc họp");
+        }
+        const meetingData = meetingDoc.data();
+        const groupId = meetingData.group_id;
+        const groupRef = db.collection("groups").doc(groupId);
+        const groupDoc = await groupRef.get();
+        if (!groupDoc.exists) {
+            throw new Error("Không tồn tại group");
+        }
+
+        const memberRef = groupRef.collection("members").doc(userId);
+        const memberDoc = await memberRef.get();
+        if (!memberDoc.exists) {
+            throw new Error("User không thuộc group này, không có quyền xem chi tiết cuộc họp");
+        }
+
+        const result = {
+            title: meetingData.title,
+            audioUrl: meetingData.audio_url,
+            createdAt: meetingData.createdAt.toDate().toISOString(),
+            description: meetingData.description,
+            minutes: {
+                sampleMinute: meetingData.minutes.sampleMinute,
+                officeMinute: meetingData.minutes.officeMinute,
+                // placeholder: meetingData.minutes.placeholder,
+                signedMinute: meetingData.minutes.signedMinute,
+                signedAt: meetingData.minutes?.signedAt? meetingData.minutes.signedAt.toDate().toISOString() : null,
+            },
+            ownerId: meetingData.owner_id,
+            scheduledAt: meetingData.scheduledAt.toDate().toISOString(),
+            status: meetingData.status,
+            transcript: meetingData.transcript,
+        }
+        return result;
+    } catch (error) {
+        throw new Error(error.message || "Lối không lấy được chi tiết cuộc họp");
+
+    }
+}

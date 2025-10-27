@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifyAccessToken } from '../middlewares/authMiddleware.js';
-import {getListMeeting,createMeeting, deleteMeeting, updateMeeting} from '../controllers/mettingController1.js'
+import {getListMeeting,createMeeting, deleteMeeting, updateMeeting, getMeeting} from '../controllers/mettingController1.js'
 const router = express.Router();
 
 
@@ -9,5 +9,6 @@ router.get('/get-list-meeting', getListMeeting);  // ?groupId=,
 router.post('/create-meeting', createMeeting);
 router.delete('/delete-meeting/:meetingId', deleteMeeting);
 router.put('/update-meeting/:meetingId', updateMeeting);
+router.get("/meeting/:meetingId", getMeeting)
 
 export default router;
