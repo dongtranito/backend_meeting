@@ -13,6 +13,9 @@ export async function uploadRecord(userId, meetingId, url) {
         if (meetingData.owner_id !== userId) {
             throw new Error("Chỉ chủ cuộc họp mới được phép upload record");
         }
+        if (meetingData.status && meetingData.status === "signed") {
+            throw new Error("Cuộc họp đã được ký, không thể upload record");
+        }
         await meetingRef.update({
             audio_url: url,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -39,6 +42,10 @@ export async function uploadSampleMinute(userId, meetingId, url) {
         const meetingData = meetingDoc.data();
         if (meetingData.owner_id !== userId) {
             throw new Error("Chỉ chủ cuộc họp mới được phép upload biên bản mẫu");
+        }
+
+        if (meetingData.status && meetingData.status === "signed") {
+            throw new Error("Cuộc họp đã được ký, không thể upload biên bản mẫu nữa");
         }
         await meetingRef.update({
             "minutes.sampleMinute": url,

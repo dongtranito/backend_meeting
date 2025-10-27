@@ -165,6 +165,9 @@ export async function createMinute(userId, meetingId, audioUrl) {
     if (meetingData.owner_id !== userId) {
       throw new Error("Chỉ chủ cuộc họp mới có quyền tạo transcript");
     }
+    if (meetingData.minutes?.officeMinute) {
+      throw new Error("Đã có biên bản rồi không được tạo nữa");
+    }
     if (!meetingData.minutes?.sampleMinute) {
       throw new Error("Chưa có biên bản mẫu");
     }
@@ -209,7 +212,13 @@ export async function getMinute(userId, meetingId) {
     if (!memberDoc.exists) {
       throw new Error("User không thuộc group này, không có quyền xem biên bản");
     }
-    const minute = meetingData.minutes;
+    const minutes = meetingData.minutes || {};
+
+    const minute = {
+      ...minutes,
+      signedAt: minutes.signedAt ? minutes.signedAt.toDate().toISOString() : null,
+      sentAt: minutes.sentAt ? minutes.sentAt.toDate().toISOString() : null,
+    };
     return minute
   } catch (error) {
     throw new Error(error.message || "Lỗi khi lấy biên bản");
@@ -228,6 +237,11 @@ export async function updateMinute(userId, meetingId, placeholder) {
     if (meetingData.owner_id !== userId) {
       throw new Error("Chỉ chủ cuộc họp mới được phép sửa minute");
     }
+    
+    if (meetingData.status && meetingData.status === "signed") {
+      throw new Error("Cuộc họp đã được ký, không thể chỉnh sửa");
+    }
+
     const buffer = await loadDocxBufferFromUrl(meetingData.minutes.sampleMinute);
     const outputBuffer = await renderDocx(buffer, placeholder);
     const fileName = `minute_updated_${Date.now()}.docx`;

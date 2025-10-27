@@ -16,14 +16,6 @@ export async function getListMeeting(userId, groupId) {
             throw new Error("User không thuộc group này, không có quyền xem danh sách cuộc họp");
         }
 
-        // const membersRef = groupRef.collection("members");
-        // const memberSnapshot = await membersRef.where("user_id", "==", userId).limit(1).get();
-
-        // console.log ("hihi", memberSnapshot.docs[0].data())
-        // if (memberSnapshot.empty) {
-        //     throw new Error("User không thuộc group này, không có quyền xem danh sách cuộc họp");
-        // }
-
 
         const meetingsRef = db.collection("meetings");
         const snapshotMeeting = await meetingsRef
@@ -132,7 +124,10 @@ export async function updateMeeting(userId, meetingId, updateData) {
         if (meetingData.owner_id !== userId) {
             throw new Error("Chỉ chủ cuộc họp mới được phép sửa");
         }
-
+        
+        if (meetingData.status && meetingData.status === "signed") {
+            throw new Error("Cuộc họp đã được ký, không thể chỉnh sửa");
+        }
         const updates = {
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         };

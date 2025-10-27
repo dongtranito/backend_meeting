@@ -68,7 +68,7 @@ export async function uploadRecord(req, res) {
             fileBuffer: buffer,
             contentType: file.mimetype,
         });
-        const result = await uploadService.uploadRecord(userId,meetingId,url)
+        const result = await uploadService.uploadRecord(userId, meetingId, url)
         fs.promises.unlink(file.path);
         return res.status(200).json({
             success: true,
@@ -82,51 +82,51 @@ export async function uploadRecord(req, res) {
         });
     }
 }
-export async function uploadSampleMinute(req, res) {
+export async function uploadSampleMinute(req, res) {    // cái upload biên bản mẫu này có thể vừa gởi file vừa gởi url nha
     try {
         const file = req.file;
-        const { meetingId } = req.body;
+        const { meetingId, url } = req.body;
         const userId = req.email;
-        if (!file) {
+        if (!file && !url) {
             return res.status(400).json({ success: false, error: "Chưa có file DOCX" });
         }
         if (!meetingId) {
             return res.status(400).json({ success: false, error: "thiếu meetingId" });
         }
 
-        // ✅ Kiểm tra MIME type cho docx
-        if (
-            file.mimetype !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        ) {
-            await fs.promises.unlink(file.path);
-            return res.status(400).json({ success: false, error: "File phải là định dạng DOCX" });
-        }
-
-        // Khúc này là check thử file có hợp lệ không 
-        const buffer = fs.readFileSync(file.path);
-        try {
-            await extractPlaceholdersWithDocx(buffer);
-        } catch (err) {
-            await fs.promises.unlink(file.path);
-            return res.status(400).json({
-                success: false,
-                error: err.message,
+        let finalUrl = url;
+        if (file) {
+            // ✅ Kiểm tra MIME type cho docx
+            if (
+                file.mimetype !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ) {
+                await fs.promises.unlink(file.path);
+                return res.status(400).json({ success: false, error: "File phải là định dạng DOCX" });
+            }
+            // Khúc này là check thử file có hợp lệ không 
+            const buffer = fs.readFileSync(file.path);
+            try {
+                await extractPlaceholdersWithDocx(buffer);
+            } catch (err) {
+                await fs.promises.unlink(file.path);
+                return res.status(400).json({
+                    success: false,
+                    error: err.message,
+                });
+            }
+            // Khúc này là upload lên s3
+            const { url } = await uploadToS3({
+                folder: "sampleMinute",
+                fileName: `${file.originalname}${meetingId}.docx`,
+                fileBuffer: buffer,
+                contentType: file.mimetype,
             });
+
+            finalUrl = url;
+            fs.promises.unlink(file.path);
         }
 
-        // Khúc này là upload lên s3
-        const { url } = await uploadToS3({
-            folder: "sampleMinute",
-            fileName: `${file.originalname}${meetingId}.docx`,
-            fileBuffer: buffer,
-            contentType: file.mimetype,
-        });
-
-        const result =await uploadService.uploadSampleMinute(userId,meetingId, url);
-
-        // Xóa file tạm sau khi upload xong
-        fs.promises.unlink(file.path);
-
+        const result = await uploadService.uploadSampleMinute(userId, meetingId, finalUrl);
         return res.status(200).json({
             success: true,
             data: result
