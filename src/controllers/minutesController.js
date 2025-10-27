@@ -51,7 +51,7 @@ export async function createMinute(req, res) {
 }
 export async function getMinute(req, res) {
     try {
-        const {meetingId } = req.params;
+        const { meetingId } = req.params;
         const userId = req.email;
         if (!meetingId) {
             return res.status(400).json({
@@ -75,9 +75,9 @@ export async function getMinute(req, res) {
 
 export async function updateMinute(req, res) {
     try {
-        const {meetingId } = req.params;
+        const { meetingId } = req.params;
         const userId = req.email;
-        const {placeholder} =req.body;
+        const { placeholder } = req.body;
         if (!meetingId || !placeholder) {
             return res.status(400).json({
                 success: false,
@@ -94,6 +94,47 @@ export async function updateMinute(req, res) {
         return res.status(500).json({
             success: false,
             error: error.response?.data || error.message || "Lỗi khi tạo biên bản",
+        });
+    }
+}
+
+export async function send2Sign(req, res) {
+    try {
+
+        const userId = req.email;
+        const { meetingId } = req.params
+        const { signers } = req.body;
+        if (!meetingId) {
+            return res.status(400).json({
+                success: false,
+                error: "Thiếu meetingId",
+            });
+        }
+        if (!signers) {
+            return res.status(400).json({
+                success: false,
+                error: "Thiếu trường 'signers'.",
+            });
+        }
+
+        if (!Array.isArray(signers)) {
+            return res.status(400).json({
+                success: false,
+                error: "'signers' phải là một mảng.",
+            });
+        }
+
+
+        const result = await minutesService.send2Sign(userId, meetingId, signers);
+        return res.status(200).json({
+            success: true,
+            result
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.response?.data || error.message,
         });
     }
 }

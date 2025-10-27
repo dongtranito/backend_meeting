@@ -4,7 +4,8 @@ import { mergeGroupAndAudio } from "../utils/mergeAudio.js"
 import { db, admin } from "../config/firebaseService.js";
 import { deleteFromS3 } from "../config/s3Service.js"
 import { generateMinute, loadDocxBufferFromUrl, renderDocx } from "../utils/generateMinute.js"
-import {uploadToS3} from "../config/s3Service.js"
+import { uploadToS3 } from "../config/s3Service.js"
+import { sendToDocuSign } from "./docusignService.js";
 dotenv.config();
 
 export async function createTranscript(userId, meetingId, audioUrl) {
@@ -248,5 +249,63 @@ export async function updateMinute(userId, meetingId, placeholder) {
     };
   } catch (error) {
     throw new Error(error.message || "Lỗi khi cập nhật biên bản");
+  }
+}
+
+export async function send2Sign(userId, meetingId, signerEmails) {
+  try {
+    const meetingRef = db.collection("meetings").doc(meetingId);
+    const meetingDoc = await meetingRef.get();
+
+    if (!meetingDoc.exists) {
+      throw new Error("Không tồn tại meeting");
+    }
+
+    const meetingData = meetingDoc.data();
+
+    if (meetingData.owner_id !== userId) {
+      throw new Error("Chỉ chủ cuộc họp mới có quyền gởi đi ký");
+    }
+    if (!meetingData.minutes?.officeMinute) {
+      throw new Error("Chưa có biên bản để ký");
+    }
+    const wordUrl = meetingData.minutes.officeMinute;
+
+    const groupId = meetingData.group_id;
+    if (!groupId) throw new Error("Không tìm thấy group_id trong meeting");
+    const membersSnap = await db
+      .collection("groups")
+      .doc(groupId)
+      .collection("members")
+      .get();
+
+    const signers = [];
+    for (const email of signerEmails) {
+      const memberDoc = membersSnap.docs.find(
+        (doc) => doc.id === email || doc.data().user_id === email
+      );
+
+      if (!memberDoc) {
+        throw new Error(`Không tìm thấy member có email: ${email}`);
+      }
+
+      const memberData = memberDoc.data();
+      signers.push({
+        name: memberData.name || "Không rõ tên",
+        email,
+      });
+    }
+
+    const envelopeId = await sendToDocuSign(wordUrl, signers);
+    if (!envelopeId) throw new Error("Không lấy được envelopeId từ DocuSign");
+
+    await meetingRef.update({
+      "minutes.envelopeId": envelopeId,
+      "minutes.sentAt": admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return envelopeId
+  } catch (error) {
+    throw new Error(error.message || "Lỗi gởi biên bản để ký");
   }
 }

@@ -10,6 +10,7 @@ import groupRoutes from './routes/groupRoutes.js'
 import meetingRoutes1 from './routes/meetingRoutes1.js'
 import uploadRoute from './routes/uploadRoute.js'
 import minutesRoute from './routes/minutesRoute.js'
+import hookRoute from './routes/hook.js'
 import {test} from './controllerTest/test.js'  // cái này để test
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.get('/', (req, res) => {
   res.send('server is runningggggggggg');
 });
 
+app.use('/hook',hookRoute)
 app.post('/test', test)
 app.use('/api', tokenRoute);
 app.use('/', authRoutes);
@@ -38,9 +40,8 @@ app.use('/', meetingRoutes)
 app.use('/', userRoutes);
 app.use('/', groupRoutes);
 app.use('/', meetingRoutes1);
-app.use('/upload',uploadRoute)
-app.use('/',minutesRoute)
-
+app.use('/upload',uploadRoute);
+app.use('/',minutesRoute);
 
 
 // Start server
