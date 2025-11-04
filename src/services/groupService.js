@@ -180,7 +180,7 @@ export async function getDetailGroup(groupId) {
 
     };
   } catch (error) {
-    throw err;
+    throw error;
   }
 }
 
