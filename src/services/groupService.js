@@ -147,7 +147,7 @@ export async function updateGroup(userId, groupId, updateData) {
   }
 }
 
-export async function getDetailGroup(groupId) {
+export async function getDetailGroup(userId, groupId) {
   try {
     const groupRef = db.collection("groups").doc(groupId);
     const groupDoc = await groupRef.get();

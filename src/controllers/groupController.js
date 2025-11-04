@@ -18,14 +18,14 @@ export async function getListGroup(req, res) {
 export async function createGroup(req, res) {
   try {
     const userId = req.email;
-    const {name, nameOwner} = req.body;
-    if (!name || !nameOwner){
+    const { name, nameOwner } = req.body;
+    if (!name || !nameOwner) {
       return res.status(400).json({
-        success:false,
+        success: false,
         error: "Thiếu dữ liệu, name hoặc là nameOwner"
       })
     }
-    const groups = await groupService.createGroup(userId, {name, nameOwner});
+    const groups = await groupService.createGroup(userId, { name, nameOwner });
     return res.status(200).json({
       success: true,
       data: groups,
@@ -100,7 +100,7 @@ export async function updateGroup(req, res) {
 export async function getDetailGroup(req, res) {
   try {
     const { groupId } = req.params;
-
+    const userId = req.email;
     if (!groupId) {
       return res.status(400).json({
         success: false,
@@ -108,7 +108,7 @@ export async function getDetailGroup(req, res) {
       });
     }
 
-    const result = await groupService.getDetailGroup(groupId);
+    const result = await groupService.getDetailGroup(userId, groupId);
 
     return res.json({
       success: true,
@@ -124,15 +124,15 @@ export async function getDetailGroup(req, res) {
 
 export async function inviteMember(req, res) {
   try {
-    const { groupId, gmailInvite,name } = req.body;
+    const { groupId, gmailInvite, name } = req.body;
     const userId = req.email;
-    if (!groupId || !gmailInvite ||!name) {
+    if (!groupId || !gmailInvite || !name) {
       return res.status(400).json({
         success: false,
         error: "Thiếu dữ liệu, groupId, gmailInvite, name",
       });
     }
-    const result = await groupService.inviteMember(userId,groupId,gmailInvite,name);
+    const result = await groupService.inviteMember(userId, groupId, gmailInvite, name);
     return res.json({
       success: true,
       data: result
