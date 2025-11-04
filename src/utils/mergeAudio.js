@@ -14,7 +14,7 @@ export async function mergeGroupVoicesUtil(groupId) {
 
   let memberVoices = [];
   const tmpRoot = os.tmpdir(); // 📂 thư mục tạm của hệ thống, luôn có
-  const tmpDir = path.join(tmpRoot, `group_${groupId}`);
+  const tmpDir = path.join(tmpRoot, `group_${groupId}_${Date.now()}`);
   const concatFile = path.join(tmpDir, "concat.txt");
   const outputFile = path.join(tmpDir, `merged_group_${groupId}.mp3`);
 
@@ -44,13 +44,6 @@ export async function mergeGroupVoicesUtil(groupId) {
       }
     }
 
-    if (memberVoices.length === 0) {
-      throw new Error("Không có thành viên nào có sampleVoice");
-    }
-
-    // console.log(`🎧 Đang tải ${memberVoices.length} file voice...`);
-
-    // 3️⃣ Download song song toàn bộ file audio
     await Promise.all(memberVoices.map(async (v, i) => {
       const res = await axios({ url: v.url, responseType: "arraybuffer" });
       const filePath = `${tmpDir}/voice_${i + 1}.mp3`;
@@ -65,24 +58,17 @@ export async function mergeGroupVoicesUtil(groupId) {
 
     fs.writeFileSync(concatFile, concatList);
 
-    // console.log(`🔄 Bắt đầu merge bằng ffmpeg...`);
-    // 👇 Thêm chỗ này
-    // console.log("📄 Checking concat.txt path:", concatFile);
-    // console.log("📦 Exists?", fs.existsSync(concatFile));
-    // if (fs.existsSync(concatFile)) {
-    //   console.log("📜 Content:\n", fs.readFileSync(concatFile, "utf-8"));
-    // } else {
-    //   console.log("🚨 concat.txt NOT FOUND — check your tmpDir path or file write!");
-    // }
-    // 5️⃣ Merge audio files
     await new Promise((resolve, reject) => {
       ffmpeg()
         .input(concatFile)
-        .inputOptions(['-f', 'concat', '-safe', '0'])
-        .outputOptions(['-acodec copy'])
+        .inputOptions(["-f", "concat", "-safe", "0"])
+        .outputOptions(["-ac 1", "-ar 44100", "-b:a 192k"])
         .save(outputFile)
-        .on('end', resolve)
-        .on('error', reject);
+        .on("end", resolve)
+        .on("error", (err) => {
+          console.error("❌ Lỗi ffmpeg:", err.message);
+          reject(err);
+        });
     });
 
     // console.log(`✅ Merge hoàn tất: ${outputFile}`);
@@ -103,11 +89,10 @@ export async function mergeGroupVoicesUtil(groupId) {
     // 8️⃣ Map speaker
     const speakerMap = memberVoices.map((v, index) => ({
       speaker: `Speaker ${index + 1}`,
-      id: index+1,
+      id: index + 1,
       name: v.name,
     }));
 
-    // 9️⃣ Update Firestore
     await groupRef.set({
       mergedVoice: {
         url: uploadResult.url,
@@ -117,11 +102,6 @@ export async function mergeGroupVoicesUtil(groupId) {
       },
     }, { merge: true });
 
-    // console.log(`📤 Upload thành công lên S3`);
-    // console.log(`🧾 URL: ${uploadResult.url}`);
-    // console.log(`🕒 Tổng thời lượng: ${totalTime.toFixed(2)} giây`);
-
-    // ✅ Return kết quả
     return {
       mergedUrl: uploadResult.url,
       totalTime,
@@ -129,16 +109,12 @@ export async function mergeGroupVoicesUtil(groupId) {
     };
 
   } catch (error) {
-    // console.error("❌ Lỗi khi merge voice:", error.message);
     throw error;
 
   } finally {
     try {
-      if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-      if (fs.existsSync(concatFile)) fs.unlinkSync(concatFile);
-      memberVoices.forEach(v => v.file && fs.existsSync(v.file) && fs.unlinkSync(v.file));
-      if (fs.existsSync(tmpDir)) fs.rmdirSync(tmpDir, { recursive: true });
-      // console.log("🧹 Đã dọn sạch file tạm");
+      if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true });
+
     } catch (cleanupErr) {
       console.warn("⚠️ Lỗi khi cleanup:", cleanupErr.message);
     }
@@ -156,9 +132,6 @@ export async function mergeGroupAndAudio(groupId, audioUrl) {
   try {
     // 🔹 Đảm bảo thư mục tồn tại
     fs.mkdirSync(tmpDir, { recursive: true });
-    // console.log(`📁 Tạo thư mục tạm: ${tmpDir}`);
-
-    // 1️⃣ Lấy dữ liệu group từ Firestore
     const groupRef = db.collection('groups').doc(groupId);
     const groupDoc = await groupRef.get();
     if (!groupDoc.exists) throw new Error('Không tìm thấy group');
@@ -170,8 +143,6 @@ export async function mergeGroupAndAudio(groupId, audioUrl) {
 
     if (!mergedVoiceUrl) throw new Error('Group chưa có mergedVoice.url');
 
-    // 2️⃣ Download 2 file audio song song
-    // console.log('⬇️ Đang tải file mergedVoice và record...');
     const [voiceRes, recordRes] = await Promise.all([
       axios({ url: mergedVoiceUrl, responseType: "arraybuffer", maxRedirects: 5, validateStatus: () => true }),
       axios({ url: audioUrl, responseType: "arraybuffer", maxRedirects: 5, validateStatus: () => true }),
@@ -180,35 +151,16 @@ export async function mergeGroupAndAudio(groupId, audioUrl) {
     if (voiceRes.status !== 200) throw new Error(`Không tải được voiceGroup (${voiceRes.status})`);
     if (recordRes.status !== 200) throw new Error(`Không tải được record (${recordRes.status})`);
 
-    // Lưu file tạm
     const voiceFile = path.join(tmpDir, 'voiceGroup.mp3');
     const recordFile = path.join(tmpDir, 'record.mp3');
     fs.writeFileSync(voiceFile, Buffer.from(voiceRes.data));
     fs.writeFileSync(recordFile, Buffer.from(recordRes.data));
 
-    // console.log('✅ Đã lưu file tạm:');
-    // console.log('   -', voiceFile);
-    // console.log('   -', recordFile);
-
-    // 3️⃣ Tạo concat.txt để ffmpeg đọc
     fs.writeFileSync(
       concatFile,
       `file '${path.resolve(voiceFile)}'\nfile '${path.resolve(recordFile)}'\n`
     );
 
-    // console.log('📄 Tạo concat.txt thành công');
-    // console.log(fs.readFileSync(concatFile, 'utf-8'));
-
-    // ✅ Kiểm tra file sau khi tải
-    const voiceBuffer = Buffer.from(voiceRes.data);
-    const recordBuffer = Buffer.from(recordRes.data);
-
-    // console.log("📦 voiceGroup size:", voiceBuffer.length, "bytes");
-    // console.log("📦 record size:", recordBuffer.length, "bytes");
-
-
-    // 4️⃣ Merge 2 audio lại bằng ffmpeg (an toàn hơn)
-    // console.log('🎧 Bắt đầu merge voiceGroup + record...');
     await new Promise((resolve, reject) => {
       ffmpeg()
         .input(voiceFile)
@@ -224,9 +176,6 @@ export async function mergeGroupAndAudio(groupId, audioUrl) {
     });
 
 
-    // console.log(`✅ Merge hoàn tất: ${outputFile}`);
-
-    // 5️⃣ Upload file merged lên S3
     const fileBuffer = fs.readFileSync(outputFile);
     const uploadRes = await uploadToS3({
       folder: 'meetingMerged',
@@ -235,9 +184,6 @@ export async function mergeGroupAndAudio(groupId, audioUrl) {
       contentType: 'audio/mpeg',
     });
 
-    // console.log('📤 Upload hoàn tất lên S3:', uploadRes.url);
-
-    // 6️⃣ Trả kết quả
     return {
       url: uploadRes.url,
       speakerMap,
@@ -245,7 +191,8 @@ export async function mergeGroupAndAudio(groupId, audioUrl) {
     };
 
   } catch (err) {
-    // console.error('❌ Lỗi khi merge group + audio:', err.message);
     throw err;
+  } finally {
+    if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 }

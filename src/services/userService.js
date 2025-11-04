@@ -4,6 +4,7 @@ import { db } from "../config/firebaseService.js";
 import { uploadToS3, deleteFromS3 } from "../config/s3Service.js";
 import dotenv from "dotenv";
 import { mergeGroupVoicesUtil } from "../utils/mergeAudio.js";
+import { error } from "console";
 
 dotenv.config();
 
@@ -45,7 +46,7 @@ export async function createSampleVoice(email, file) {
       affectedGroups.forEach(groupId => {
         Promise.resolve(mergeGroupVoicesUtil(groupId))
           .then(() => console.log(`✅ Re-merged voice cho group ${groupId}`))
-          .catch(err => console.error(`❌ Merge lại group ${groupId} lỗi:`, err.message));
+          .catch(err => console.log(err));
       });
     }
     return {

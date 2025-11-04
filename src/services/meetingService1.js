@@ -188,20 +188,21 @@ export async function getMeeting(userId, meetingId) {
         const result = {
             title: meetingData.title,
             audioUrl: meetingData.audio_url,
-            createdAt: meetingData.createdAt.toDate().toISOString(),
-            description: meetingData.description,
+            createdAt: meetingData.createdAt?.toDate().toISOString() || null,
+            description: meetingData.description || "",
             minutes: {
-                sampleMinute: meetingData.minutes.sampleMinute,
-                officeMinute: meetingData.minutes.officeMinute,
-                // placeholder: meetingData.minutes.placeholder,
-                signedMinute: meetingData.minutes.signedMinute,
-                signedAt: meetingData.minutes?.signedAt? meetingData.minutes.signedAt.toDate().toISOString() : null,
+                sampleMinute: meetingData.minutes?.sampleMinute || null,
+                officeMinute: meetingData.minutes?.officeMinute || null,
+                signedMinute: meetingData.minutes?.signedMinute || null,
+                signedAt: meetingData.minutes?.signedAt
+                    ? meetingData.minutes.signedAt.toDate().toISOString()
+                    : null,
             },
             ownerId: meetingData.owner_id,
-            scheduledAt: meetingData.scheduledAt.toDate().toISOString(),
-            status: meetingData.status,
-            transcript: meetingData.transcript,
-        }
+            scheduledAt: meetingData.scheduledAt?.toDate().toISOString() || null,
+            status: meetingData.status || "unknown",
+            transcript: meetingData.transcript || null,
+        };
         return result;
     } catch (error) {
         throw new Error(error.message || "Lối không lấy được chi tiết cuộc họp");

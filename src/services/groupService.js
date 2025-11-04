@@ -155,6 +155,13 @@ export async function getDetailGroup(groupId) {
       throw new Error("Group not found");
     }
 
+    const memberRef = groupRef.collection("members").doc(userId);
+    const memberDoc = await memberRef.get();
+
+    if (!memberDoc.exists) {
+      throw new Error("Bạn không phải là thành viên trong group này nên không xem chi tiết được group");
+    }
+
     const membersSnapshot = await groupRef.collection("members").get();
     const membersCount = membersSnapshot.size;
 
