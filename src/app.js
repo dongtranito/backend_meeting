@@ -10,7 +10,7 @@ import meetingRoutes1 from './routes/meetingRoutes1.js'
 import uploadRoute from './routes/uploadRoute.js'
 import minutesRoute from './routes/minutesRoute.js'
 import hookRoute from './routes/hook.js'
-// import chatbot from './routes/chatbotRoutes.js'
+import chatbot from './routes/chatbotRoutes.js'
 import {test} from './controllerTest/test.js'  // cái này để test
 dotenv.config();
 
@@ -33,7 +33,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/hook',hookRoute)
-// app.use('/chat',chatbot);
+app.use('/chat',chatbot);
 app.post('/test', test)
 app.use('/api', tokenRoute);
 app.use('/', authRoutes);

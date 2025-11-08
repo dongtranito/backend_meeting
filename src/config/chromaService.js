@@ -1,6 +1,7 @@
 import { ChromaClient } from "chromadb";
 import { GoogleGeminiEmbeddingFunction } from "@chroma-core/google-gemini";
 import dotenv from "dotenv";
+import crypto from "crypto";
 dotenv.config();
 
 const client = new ChromaClient({
@@ -14,17 +15,23 @@ const embedder = new GoogleGeminiEmbeddingFunction({
 });
 
 const collection = await client.getOrCreateCollection({
-    name: "pikachu_collection",
+    name: "MeetingDB",
     embeddingFunction: embedder,
 });
 
 // Lấy hoặc tạo collection
 
-export async function addDocument(id, text, groupId, meetingId) {
+export async function addDocument(segments, groupId, meetingId) {
+    const ids = segments.map(() => crypto.randomUUID());
+    const metadatas = segments.map(() => ({
+        groupId,
+        meetingId,
+    }));
+
     await collection.upsert({
-        ids: [id],
-        documents: [text],
-        metadatas: [{ groupId, meetingId }],
+        ids,
+        documents: segments,
+        metadatas,
     });
     return "đã thêm thành công"
 }   // ông nội này cho thêm nhiều document cùng lúc. nên là nó cái nào cũng là mãng hết
@@ -32,7 +39,7 @@ export async function addDocument(id, text, groupId, meetingId) {
 export async function deleteByMeetingId(meetingId) {
 
     await collection.delete({
-        where: { meetingId: meetingId }, // lọc theo metadata
+        where: { meetingId: meetingId },
     });
 
     return `Đã xóa embedding thành công, ${meetingId}`;
@@ -42,15 +49,15 @@ export async function searchSimilar({
     query,
     meetingId = null,
     groupId = null,
-    limit = 3
+    limit = 10
 }) {
     try {
         if (!groupId && !meetingId) {
-            throw new Error("❌ Cần có groupId hoặc meetingId để lọc kết quả.");
+            throw new Error("Cần có groupId hoặc meetingId để lọc kết quả.");
         }
 
         if (groupId && meetingId) {
-            throw new Error("❌ Chỉ được chọn 1 trong 2: groupId hoặc meetingId, không được truyền cả hai.");
+            throw new Error("Chỉ được chọn 1 trong 2: groupId hoặc meetingId, không được truyền cả hai.");
         }
 
         let where = {};
@@ -63,7 +70,7 @@ export async function searchSimilar({
         const results = await collection.query({
             queryTexts: [query],
             nResults: limit,
-            where, // thêm điều kiện lọc metadata
+            where,
         });
 
         const documents = results.documents?.[0] || [];

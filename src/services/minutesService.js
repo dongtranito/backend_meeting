@@ -6,6 +6,7 @@ import { deleteFromS3 } from "../config/s3Service.js"
 import { generateMinute, loadDocxBufferFromUrl, renderDocx } from "../utils/generateMinute.js"
 import { uploadToS3 } from "../config/s3Service.js"
 import { sendToDocuSign } from "./docusignService.js";
+import { addDocument } from "../config/chromaService.js";
 dotenv.config();
 
 export async function createTranscript(userId, meetingId, audioUrl) {
@@ -186,6 +187,9 @@ export async function createMinute(userId, meetingId, audioUrl) {
       "minutes.placeholder": result.aiResult,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    const segments = transcript.segments.map(s => `[${s.speaker}] ${s.text}`);
+    addDocument (segments, meetingData.group_id,meetingId)
     return result
   } catch (error) {
     throw new Error(error.message || "Không tạo được biên bản");

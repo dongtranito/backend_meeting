@@ -1,10 +1,12 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { streamPrompt } from "./chatbotService.js";
-import 'dotenv/config';
+import { streamPromptGroupId, streamPromptMeetingId } from "./chatbotService.js";
 
 export async function handleStreamRequest(req, res) {
     try {
         const { prompt, meetingId, groupId } = req.body;
+        // const userId = req.email;
+        const userId = "xuanvy74269@gmail.com";
+        
+
         if (!prompt || !prompt.trim()) {
             return res.status(400).json({
                 success: false,
@@ -31,7 +33,12 @@ export async function handleStreamRequest(req, res) {
             Connection: "keep-alive",
         });
 
-        const stream = await streamPrompt(prompt,meetingId, groupId);
+        let stream;
+        if (meetingId) {
+            stream = await streamPromptMeetingId(userId,prompt, meetingId);
+        } else {
+            stream = await streamPromptGroupId(userId, prompt,groupId);
+        }
 
         for await (const chunk of stream) {
             const text = chunk.content || "";

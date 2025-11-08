@@ -1,5 +1,5 @@
 import { db, admin } from '../config/firebaseService.js';
-
+import {deleteByMeetingId} from '../config/chromaService.js'
 export async function getListMeeting(userId, groupId) {
     try {
 
@@ -103,6 +103,7 @@ export async function deleteMeeting(userId, meetingId) {
         if (meetingData.owner_id !== userId) {
             throw new Error("chỉ chủ cuộc họp mới xóa được cuộc họp");
         }
+        deleteByMeetingId(meetingId);
         await meetingRef.delete();
         return { meetingId }
     } catch (error) {
