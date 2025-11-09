@@ -4,101 +4,108 @@ import dotenv from "dotenv";
 import crypto from "crypto";
 dotenv.config();
 
-const client = new ChromaClient({
-    host: "localhost",
-    port: 8000,
-    ssl: false,
-});
+let client = null;
+let collection = null;
 
-const embedder = new GoogleGeminiEmbeddingFunction({
-    apiKey: process.env.GEMINI_API_KEY,
-});
+// --- Hàm khởi tạo an toàn ---
+async function initChroma() {
+  try {
+    if (collection) return collection;
 
-const collection = await client.getOrCreateCollection({
-    name: "MeetingDB",
-    embeddingFunction: embedder,
-});
+    client = new ChromaClient({
+      host: process.env.CHROMA_HOST,
+      port: process.env.CHROMA_PORT,
+      ssl: false,
+    });
 
-// Lấy hoặc tạo collection
+    const embedder = new GoogleGeminiEmbeddingFunction({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
 
+    collection = await client.getOrCreateCollection({
+      name: "MeetingDB",
+      embeddingFunction: embedder,
+    });
+
+    console.log("✅ Đã kết nối Chroma thành công!");
+    return collection;
+  } catch (err) {
+    console.error("⚠️ Không thể kết nối ChromaDB:", err.message);
+    collection = null; // reset về null để biết là chưa có
+    return null;
+  }
+}
+
+// --- Thêm tài liệu ---
 export async function addDocument(segments, groupId, meetingId) {
+  try {
+    const col = await initChroma();
+    if (!col) {
+      console.warn("⚠️ Bỏ qua addDocument — chưa có kết nối Chroma");
+      return "Chưa kết nối được ChromaDB";
+    }
+
     const ids = segments.map(() => crypto.randomUUID());
-    const metadatas = segments.map(() => ({
-        groupId,
-        meetingId,
+    const metadatas = segments.map(() => ({ groupId, meetingId }));
+
+    await col.upsert({ ids, documents: segments, metadatas });
+    return "Đã thêm thành công!";
+  } catch (error) {
+    console.error("❌ Lỗi khi thêm document:", error.message);
+    return "Lỗi khi thêm document";
+  }
+}
+
+// --- Xóa theo meetingId ---
+export async function deleteByMeetingId(meetingId) {
+  try {
+    const col = await initChroma();
+    if (!col) return "Không có kết nối Chroma";
+
+    await col.delete({ where: { meetingId } });
+    return `Đã xóa embedding thành công: ${meetingId}`;
+  } catch (error) {
+    console.error("❌ Lỗi khi xóa:", error.message);
+    return "Lỗi khi xóa embedding";
+  }
+}
+
+// --- Tìm kiếm tương tự ---
+export async function searchSimilar({
+  query,
+  meetingId = null,
+  groupId = null,
+  limit = 10,
+}) {
+  try {
+    const col = await initChroma();
+    if (!col) return [];
+
+    if (!groupId && !meetingId)
+      throw new Error("Cần có groupId hoặc meetingId để lọc kết quả.");
+    if (groupId && meetingId)
+      throw new Error("Chỉ được chọn 1 trong 2: groupId hoặc meetingId.");
+
+    const where = meetingId ? { meetingId } : { groupId };
+    const results = await col.query({
+      queryTexts: [query],
+      nResults: limit,
+      where,
+    });
+
+    const documents = results.documents?.[0] || [];
+    const metadatas = results.metadatas?.[0] || [];
+
+    const merged = documents.map((doc, i) => ({
+      text: doc,
+      groupId: metadatas[i]?.groupId || null,
+      meetingId: metadatas[i]?.meetingId || null,
     }));
 
-    await collection.upsert({
-        ids,
-        documents: segments,
-        metadatas,
-    });
-    return "đã thêm thành công"
-}   // ông nội này cho thêm nhiều document cùng lúc. nên là nó cái nào cũng là mãng hết
-
-export async function deleteByMeetingId(meetingId) {
-
-    await collection.delete({
-        where: { meetingId: meetingId },
-    });
-
-    return `Đã xóa embedding thành công, ${meetingId}`;
+    console.log("🔍 Kết quả tìm thấy:", merged);
+    return merged;
+  } catch (error) {
+    console.error("❌ Lỗi khi tìm kiếm:", error.message);
+    return [];
+  }
 }
-
-export async function searchSimilar({
-    query,
-    meetingId = null,
-    groupId = null,
-    limit = 10
-}) {
-    try {
-        if (!groupId && !meetingId) {
-            throw new Error("Cần có groupId hoặc meetingId để lọc kết quả.");
-        }
-
-        if (groupId && meetingId) {
-            throw new Error("Chỉ được chọn 1 trong 2: groupId hoặc meetingId, không được truyền cả hai.");
-        }
-
-        let where = {};
-        if (meetingId) {
-            where = { meetingId: meetingId };
-        } else if (groupId) {
-            where = { groupId: groupId };
-        }
-
-        const results = await collection.query({
-            queryTexts: [query],
-            nResults: limit,
-            where,
-        });
-
-        const documents = results.documents?.[0] || [];
-        const metadatas = results.metadatas?.[0] || [];
-
-        const merged = documents.map((doc, index) => ({
-            text: doc,
-            groupId: metadatas[index]?.groupId || null,
-            meetingId: metadatas[index]?.meetingId || null,
-        }));
-
-        console.log("🔍 Kết quả tìm thấy:", merged);
-        return merged;
-    } catch (error) {
-        throw error
-    }
-}
-
-
-// [
-//   {
-//     text: "Biên bản họp nhóm ReNews",
-//     groupId: "groupA",
-//     meetingId: "meeting01"
-//   },
-//   {
-//     text: "Kế hoạch thiết kế sản phẩm tái chế",
-//     groupId: "groupA",
-//     meetingId: "meeting02"
-//   }
-// ]
