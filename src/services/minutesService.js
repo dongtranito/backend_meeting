@@ -287,6 +287,10 @@ export async function send2Sign(userId, meetingId, signerEmails) {
     if (!meetingData.minutes?.officeMinute) {
       throw new Error("Chưa có biên bản để ký");
     }
+
+    if (meetingData.status === "signed") {
+      throw new Error ("biên bản đã ký rồi")
+    }
     const wordUrl = meetingData.minutes.officeMinute;
 
     const groupId = meetingData.group_id;

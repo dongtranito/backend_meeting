@@ -83,7 +83,7 @@ export async function sendToDocuSign(wordUrl, signers) {
         }));
 
         const envelopePayload = {
-            emailSubject: "📄 Mời bạn ký tài liệu điện tử",
+            emailSubject: "Mời bạn ký tài liệu điện tử",
             documents: [
                 {
                     documentBase64: fileBase64,
