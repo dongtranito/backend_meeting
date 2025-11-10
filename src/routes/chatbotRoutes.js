@@ -4,7 +4,7 @@ import { verifyAccessToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// router.use(verifyAccessToken);
+router.use(verifyAccessToken);
 router.post('/' ,handleStreamRequest);
 
 export default router;

@@ -3,8 +3,8 @@ import { streamPromptGroupId, streamPromptMeetingId } from "./chatbotService.js"
 export async function handleStreamRequest(req, res) {
     try {
         const { prompt, meetingId, groupId } = req.body;
-        // const userId = req.email;
-        const userId = "xuanvy74269@gmail.com";
+        const userId = req.email;
+        // const userId = "xuanvy74269@gmail.com";
         
 
         if (!prompt || !prompt.trim()) {
