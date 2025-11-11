@@ -13,9 +13,7 @@ async function initChroma() {
     if (collection) return collection;
 
     client = new ChromaClient({
-      host: process.env.CHROMA_HOST,
-      port: process.env.CHROMA_PORT,
-      ssl: false,
+      path: process.env.CHROMA_URL,
     });
 
     const embedder = new GoogleGeminiEmbeddingFunction({
@@ -49,6 +47,7 @@ export async function addDocument(segments, groupId, meetingId) {
     const metadatas = segments.map(() => ({ groupId, meetingId }));
 
     await col.upsert({ ids, documents: segments, metadatas });
+    console.log ("đã thêm thành công " + segments)
     return "Đã thêm thành công!";
   } catch (error) {
     console.error("❌ Lỗi khi thêm document:", error.message);
@@ -63,6 +62,7 @@ export async function deleteByMeetingId(meetingId) {
     if (!col) return "Không có kết nối Chroma";
 
     await col.delete({ where: { meetingId } });
+    console.log (`Đã xóa embedding thành công: ${meetingId}`)
     return `Đã xóa embedding thành công: ${meetingId}`;
   } catch (error) {
     console.error("❌ Lỗi khi xóa:", error.message);
