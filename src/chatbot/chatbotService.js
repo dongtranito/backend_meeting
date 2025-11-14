@@ -22,7 +22,23 @@ export async function streamPromptGroupId(userId, prompt, groupId) {
     const memberDoc = await memberRef.get();
     if (!memberDoc.exists)
       throw new Error("Bạn không phải là thành viên trong group này nên không có quyền dùng chatbot");
-    
+
+
+    const membersSnap = await groupRef.collection("members").get();
+    const members = membersSnap.docs.map(doc => doc.data());
+    const memberCount = members.length;
+
+    const memberListText = members
+      .map(m => `${m.name} (${m.role})`)
+      .join(",");
+
+    const meetingsSnap = await db
+      .collection("meetings")
+      .where("group_id", "==", groupId)
+      .get();
+
+    const meetingCount = meetingsSnap.size;
+
     const results = await searchSimilar({ query: prompt, groupId });
 
     const meetingInfos = await Promise.all(
@@ -30,7 +46,7 @@ export async function streamPromptGroupId(userId, prompt, groupId) {
         const meetingRef = db.collection("meetings").doc(r.meetingId);
         const meetingDoc = await meetingRef.get();
 
-        if (!meetingDoc.exists) return ""; 
+        if (!meetingDoc.exists) return "";
 
         const m = meetingDoc.data();
 
@@ -40,7 +56,7 @@ Cuộc họp: ${m.title || "Không có tiêu đề"}
 - Mô tả: ${m.description || "Không có mô tả"}
 - Ngày tạo: ${m.createdAt?.toDate().toISOString() || "không rõ"}
 - Lịch họp: ${m.scheduledAt?.toDate().toISOString() || "không rõ"}
-- Trạng thái (đã được ký cuộc họp hay chưa): ${m.status === "signed" ? "Đã ký" : "Chưa ký"}
+- Trạng thái (đã được ký cuộc họp hay chưa): ${m.status === "signed" ? `Đã ký và link cuộc họp đã ký rồi là ${m.minutes.signedMinute}` : "Chưa ký"}
 ---
 `;
       })
@@ -51,13 +67,16 @@ Bạn là trợ lý ảo của nhóm "${groupData.name}".
 Thông tin nhóm:
 - Mô tả: ${groupData.description || "Không có mô tả"}
 - Ngày tạo: ${groupData.createdAt?.toDate().toISOString()}
+- Số lượng cuộc họp là: ${meetingCount}
+- Số lượng thành viên: ${memberCount}
+- Danh sách thành viên: ${memberListText}
 
 Dưới đây là các thông tin các transcript cuộc họp có vector tương đồng:
 ${enrichedMeetings}
 
-Người dùng hỏi: ${prompt}
+Câu hỏi của người dùng ${memberDoc.data().name}: ${prompt}
 `;
-    console.log("hi", finalPrompt)
+    console.log("đây là chatbot group", finalPrompt)
     const stream = await llm.stream(finalPrompt);
     return stream;
 
@@ -97,14 +116,14 @@ Thông tin cuộc họp:
 - Mô tả: ${meetingData.description || "Không có mô tả"}
 - Ngày họp: ${meetingData.scheduledAt?.toDate().toISOString()}
 - Ngày tạo: ${meetingData.createdAt?.toDate().toISOString()}
-- Trạng thái (đã được ký cuộc họp hay chưa):  ${meetingData.status === "signed" ? "Đã ký" : "Chưa ký"}
+- Trạng thái (đã được ký cuộc họp hay chưa):  ${meetingData.status === "signed" ? `Đã ký và link cuộc họp đã ký rồi là ${meetingData.minutes.signedMinute}` : "Chưa ký"}
 
 Nội dung tương đồng trong vector database:
 ${mergedContext}
 
-Câu hỏi người dùng: ${prompt}
+Câu hỏi người dùng ${memberDoc.data().name}: ${prompt}
 `;
-    console.log ("hihi", finalPrompt)
+    console.log("đây là chatbot cuộc họp", finalPrompt)
     const stream = await llm.stream(finalPrompt);
     return stream;
 

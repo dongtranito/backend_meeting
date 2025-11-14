@@ -6,7 +6,7 @@ import { deleteFromS3 } from "../config/s3Service.js"
 import { generateMinute, loadDocxBufferFromUrl, renderDocx } from "../utils/generateMinute.js"
 import { uploadToS3 } from "../config/s3Service.js"
 import { sendToDocuSign } from "./docusignService.js";
-import { addDocument } from "../config/chromaService.js";
+import { addDocument, deleteByMeetingId } from "../config/chromaService.js";
 dotenv.config();
 
 export async function createTranscript(userId, meetingId, audioUrl) {
@@ -189,6 +189,7 @@ export async function createMinute(userId, meetingId, audioUrl) {
     });
 
     const segments = transcript.segments.map(s => `[${s.speaker}] ${s.text}`);
+    deleteByMeetingId (meetingId)
     addDocument (segments, meetingData.group_id,meetingId)
     return result
   } catch (error) {
