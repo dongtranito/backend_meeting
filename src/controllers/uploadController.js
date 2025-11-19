@@ -58,17 +58,17 @@ export async function uploadRecord(req, res) {
             await fs.promises.unlink(file.path);
             return res.status(400).json({ success: false, error: "File phải là dạng audio" });
         }
-        // const metadata = await parseFile(file.path);
-        // const duration = metadata.format.duration || 0;
-        const buffer = fs.readFileSync(file.path);
 
-        const { url } = await uploadToS3({
-            folder: "record",
-            fileName: `${file.originalname}${meetingId}.mp3`,
-            fileBuffer: buffer,
-            contentType: file.mimetype,
-        });
-        const result = await uploadService.uploadRecord(userId, meetingId, url)
+        // const buffer = fs.readFileSync(file.path);
+
+        // const { url } = await uploadToS3({
+        //     folder: "record",
+        //     fileName: `${file.originalname}${meetingId}.mp3`,
+        //     fileBuffer: buffer,
+        //     contentType: file.mimetype,
+        // });
+
+        const result = await uploadService.uploadRecord(userId, meetingId, file)
         fs.promises.unlink(file.path);
         return res.status(200).json({
             success: true,

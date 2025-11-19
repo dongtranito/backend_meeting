@@ -1,6 +1,8 @@
 import { db, admin } from "../config/firebaseService.js";
+import fs from "fs";
+import { uploadToS3, deleteFromS3 } from "../config/s3Service.js";
 
-export async function uploadRecord(userId, meetingId, url) {
+export async function uploadRecord(userId, meetingId, file) {
     try {
         const meetingRef = db.collection("meetings").doc(meetingId);
         const meetingDoc = await meetingRef.get();
@@ -16,6 +18,18 @@ export async function uploadRecord(userId, meetingId, url) {
         if (meetingData.status && meetingData.status === "signed") {
             throw new Error("Cuộc họp đã được ký, không thể upload record");
         }
+        if (meetingData.minutes?.officeMinute) {
+            throw new Error("Cuộc họp đã tạo biên bản nên không thể upload record");
+        }
+
+        const buffer = fs.readFileSync(file.path);
+        const { url } = await uploadToS3({
+            folder: "record",
+            fileName: `${file.originalname}${meetingId}.mp3`,
+            fileBuffer: buffer,
+            contentType: file.mimetype,
+        });
+
         await meetingRef.update({
             audio_url: url,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -47,6 +61,7 @@ export async function uploadSampleMinute(userId, meetingId, url) {
         if (meetingData.status && meetingData.status === "signed") {
             throw new Error("Cuộc họp đã được ký, không thể upload biên bản mẫu nữa");
         }
+        
         await meetingRef.update({
             "minutes.sampleMinute": url,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
