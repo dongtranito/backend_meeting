@@ -30,7 +30,7 @@ app.use(cookieParser());
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('server is runningggggggggg');
+  res.send('server is runningggggggggg1');
 });
 
 app.get('/cronjob', (req, res) => {
@@ -59,5 +59,5 @@ app.use('/', minutesRoute);
 
 // Start server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server is running on port ${port}1`);
 }); 
