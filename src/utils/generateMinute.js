@@ -36,6 +36,7 @@ export async function loadDocxBufferFromUrl(url) {
 }
 // Đây là data được gởi để tạo transcript
 // const data = {
+//   prompt
 //   urlSampleMinute: meetingData.minutes.sampleMinute,
 //   title: meetingData.title || "",
 //   description: meetingData.description || "",
@@ -87,6 +88,7 @@ Ví dụ định dạng:
     ...
   }
 }
+  Đây là yêu cầu của người dùng nếu có: ${data.prompt || "null"}
 `;
 
     const result = await model.invoke([{ role: "user", content: prompt }]);

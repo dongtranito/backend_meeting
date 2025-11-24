@@ -152,7 +152,7 @@ function extractTranscriptSegments(jsonData, speakerMap, totalTime) {
   return segments;
 }
 
-export async function createMinute(userId, meetingId, audioUrl) {
+export async function createMinute(userId, meetingId, audioUrl, prompt) {
   try {
     const meetingRef = db.collection("meetings").doc(meetingId);
     const meetingDoc = await meetingRef.get();
@@ -166,14 +166,27 @@ export async function createMinute(userId, meetingId, audioUrl) {
     if (meetingData.owner_id !== userId) {
       throw new Error("Chỉ chủ cuộc họp mới có quyền tạo transcript");
     }
-    if (meetingData.minutes?.officeMinute) {
-      throw new Error("Đã có biên bản rồi không được tạo nữa");
-    }
+
     if (!meetingData.minutes?.sampleMinute) {
       throw new Error("Chưa có biên bản mẫu");
     }
-    const transcript = await createTranscript(userId, meetingId, audioUrl);  //trả về {text, segments} text là transcript á
+
+    if (meetingData.status && meetingData.status === "signed") {
+      throw new Error("Cuộc họp đã được ký, Không thể tạo lại biên bản");
+    }
+
+    let transcript
+    if (!meetingData.transcript) {
+      if (!audioUrl) {
+        throw new Error("không có url để tạo trancript trong hàm tạo biên bản")
+      }
+      transcript = await createTranscript(userId, meetingId, audioUrl);  //trả về {text, segments} text là transcript á
+    } else {
+      transcript = meetingData.transcript
+    }
+
     const data = {
+      prompt,
       urlSampleMinute: meetingData.minutes.sampleMinute,
       title: meetingData.title || "",
       description: meetingData.description || "",
@@ -187,10 +200,11 @@ export async function createMinute(userId, meetingId, audioUrl) {
       "minutes.placeholder": result.aiResult,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-
-    const segments = transcript.segments.map(s => `[${s.speaker}] ${s.text}`);
-    deleteByMeetingId (meetingId)
-    addDocument (segments, meetingData.group_id,meetingId)
+    if (transcript.segments && transcript.segments.length > 0) {
+      const segments = transcript.segments.map(s => `[${s.speaker}] ${s.text}`);
+      deleteByMeetingId(meetingId)
+      addDocument(segments, meetingData.group_id, meetingId)
+    }
     return result
   } catch (error) {
     throw new Error(error.message || "Không tạo được biên bản");
@@ -290,7 +304,7 @@ export async function send2Sign(userId, meetingId, signerEmails) {
     }
 
     if (meetingData.status === "signed") {
-      throw new Error ("biên bản đã ký rồi")
+      throw new Error("biên bản đã ký rồi")
     }
     const wordUrl = meetingData.minutes.officeMinute;
 

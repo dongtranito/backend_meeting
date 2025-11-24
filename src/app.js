@@ -64,5 +64,5 @@ app.use('/', minutesRoute);
 
 // Start server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}1`);
+  console.log(`Server is running on port ${port}`);
 }); 

@@ -28,15 +28,15 @@ export async function createTranscript(req, res) {
 
 export async function createMinute(req, res) {
     try {
-        const { url, meetingId } = req.body;
+        const { url, meetingId, prompt  } = req.body;
         const userId = req.email;
-        if (!meetingId || !url) {
+        if (!meetingId ) {
             return res.status(400).json({
                 success: false,
-                error: "Thiếu trường meetingId hoặc thiếu url trong body",
+                error: "Thiếu trường meetingId ở body",
             });
         }
-        const result = await minutesService.createMinute(userId, meetingId, url);
+        const result = await minutesService.createMinute(userId, meetingId, url, prompt );
         return res.status(200).json({
             success: true,
             message: "Tạo biên bản thành công",
