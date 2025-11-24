@@ -64,5 +64,7 @@ app.use('/', minutesRoute);
 
 // Start server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  const time = new Date().toLocaleString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh"
+  }); console.log(`Server is running on port ${port} at ${time}`);
 }); 
