@@ -339,9 +339,10 @@ export async function send2Sign(userId, meetingId, signerEmails) {
     await meetingRef.update({
       "minutes.envelopeId": envelopeId,
       "minutes.sentAt": admin.firestore.FieldValue.serverTimestamp(),
+      "minutes.signerEmails": signerEmails,
     });
 
-    return envelopeId
+    return {envelopeId, signerEmails}
   } catch (error) {
     throw new Error(error.message || "Lỗi gởi biên bản để ký");
   }

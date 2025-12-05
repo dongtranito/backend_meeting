@@ -198,6 +198,7 @@ export async function getMeeting(userId, meetingId) {
                 signedAt: meetingData.minutes?.signedAt
                     ? meetingData.minutes.signedAt.toDate().toISOString()
                     : null,
+                signerEmails: meetingData.minutes?.signerEmails,
             },
             ownerId: meetingData.owner_id,
             scheduledAt: meetingData.scheduledAt?.toDate().toISOString() || null,
