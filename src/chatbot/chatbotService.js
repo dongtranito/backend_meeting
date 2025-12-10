@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const llm = new ChatGoogleGenerativeAI({
-  model: "gemini-2.0-flash",
+  model: process.env.GEMINI_MODEL_LLM,
   apiKey: process.env.GEMINI_API_KEY,
 });
 
