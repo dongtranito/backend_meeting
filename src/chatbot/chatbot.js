@@ -41,7 +41,11 @@ export async function handleStreamRequest(req, res) {
         }
 
         for await (const chunk of stream) {
-            const text = chunk.content || "";
+            const content = chunk.content;
+            // chunk.content có thể là array hoặc string, cần chuyển thành string
+            const text = Array.isArray(content) 
+                ? content.map(item => typeof item === 'object' ? item.text || '' : item).join('')
+                : (content || "");
             res.write(text);
         }
         res.end();

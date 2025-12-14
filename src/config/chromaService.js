@@ -96,12 +96,23 @@ export async function searchSimilar({
     const documents = results.documents?.[0] || [];
     const metadatas = results.metadatas?.[0] || [];
 
-    const merged = documents.map((doc, i) => ({
-      text: doc,
-      groupId: metadatas[i]?.groupId || null,
-      meetingId: metadatas[i]?.meetingId || null,
-    }));
+    const mergedMap = {};
 
+    documents.forEach((doc, i) => {
+      const meetingId = metadatas[i]?.meetingId || null;
+      if (!meetingId) return;
+
+      if (!mergedMap[meetingId]) {
+        mergedMap[meetingId] = {
+          meetingId,
+          texts: [],
+        };
+      }
+
+      mergedMap[meetingId].texts.push(doc);
+    });
+
+    const merged = Object.values(mergedMap);
     console.log("🔍 Kết quả tìm thấy:", merged);
     return merged;
   } catch (error) {

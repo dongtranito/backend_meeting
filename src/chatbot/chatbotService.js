@@ -49,14 +49,19 @@ export async function streamPromptGroupId(userId, prompt, groupId) {
         if (!meetingDoc.exists) return "";
 
         const m = meetingDoc.data();
+        const sentences = r.texts
+          .map((t, i) => `  ${i + 1}. ${t}`)
+          .join("\n");
+// Các câu nói : ${sentences} nằm trong 
 
         return `
-Câu nói: ${r.text} nằm trong 
 Cuộc họp: ${m.title || "Không có tiêu đề"}
 - Mô tả: ${m.description || "Không có mô tả"}
 - Ngày tạo: ${m.createdAt?.toDate().toISOString() || "không rõ"}
 - Lịch họp: ${m.scheduledAt?.toDate().toISOString() || "không rõ"}
 - Trạng thái (đã được ký cuộc họp hay chưa): ${m.status === "signed" ? `Đã ký và link cuộc họp đã ký rồi là ${m.minutes.signedMinute}` : "Chưa ký"}
+-Transcript của cuộc họp là: 
+${m.transcript.text}
 ---
 `;
       })
@@ -71,7 +76,7 @@ Thông tin nhóm:
 - Số lượng thành viên: ${memberCount}
 - Danh sách thành viên: ${memberListText}
 
-Dưới đây là các thông tin các transcript cuộc họp có vector tương đồng:
+Dưới đây là các thông tin chi tiết cuộc họp có trong nhóm liên quan đến câu hỏi:
 ${enrichedMeetings}
 
 Câu hỏi của người dùng ${memberDoc.data().name}: ${prompt}
@@ -104,11 +109,11 @@ export async function streamPromptMeetingId(userId, prompt, meetingId) {
     if (!memberDoc.exists)
       throw new Error("User không thuộc group này, không có quyền dùng chatbot");
 
-    const results = await searchSimilar({ query: prompt, meetingId });
+    // const results = await searchSimilar({ query: prompt, meetingId });
 
-    const mergedContext = results
-      .map((r) => ` ${r.text}`)
-      .join("\n---\n");
+    // const mergedContext = results
+    //   .map((r) => ` ${r.text}`)
+    //   .join("\n---\n");
 
     const finalPrompt = `
 Bạn là trợ lý ảo của cuộc họp "${meetingData.title}" thuộc nhóm "${groupDoc.data().name}".
@@ -118,8 +123,8 @@ Thông tin cuộc họp:
 - Ngày tạo: ${meetingData.createdAt?.toDate().toISOString()}
 - Trạng thái (đã được ký cuộc họp hay chưa):  ${meetingData.status === "signed" ? `Đã ký và link cuộc họp đã ký rồi là ${meetingData.minutes.signedMinute}` : "Chưa ký"}
 
-Nội dung tương đồng trong vector database:
-${mergedContext}
+Transcript của cuộc họp là: 
+${meetingData.transcript.text}
 
 Câu hỏi người dùng ${memberDoc.data().name}: ${prompt}
 `;
