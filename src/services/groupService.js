@@ -1,5 +1,6 @@
 import { db, admin } from "../config/firebaseService.js";
 import { mergeGroupVoicesUtil } from "../utils/mergeAudio.js";
+import {cronJobChromaDB} from "../chatbot/cronjob.js"
 
 export async function getListGroup(userId) {
   try {
@@ -99,7 +100,7 @@ export async function deleteGroup(userId, groupId) {
     // Xóa subcollection members
     const membersSnapshot = await groupRef.collection("members").get();
     const batch = db.batch();
-
+    cronJobChromaDB();
     membersSnapshot.forEach((doc) => {
       batch.delete(doc.ref);
     });

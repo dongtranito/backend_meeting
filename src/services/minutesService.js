@@ -180,6 +180,7 @@ export async function createMinute(userId, meetingId, audioUrl, prompt) {
       if (!audioUrl) {
         throw new Error("không có url để tạo trancript trong hàm tạo biên bản")
       }
+      console.log ("đang tạo transcript")
       transcript = await createTranscript(userId, meetingId, audioUrl);  //trả về {text, segments} text là transcript á
     } else {
       transcript = meetingData.transcript
@@ -194,6 +195,7 @@ export async function createMinute(userId, meetingId, audioUrl, prompt) {
       transcriptText: transcript.text || "",
       metaData: meetingData.meta_data || {},
     };
+    console.log("đang gen biên bản");
     const result = await generateMinute(data);
     await meetingRef.update({
       "minutes.officeMinute": result.url,

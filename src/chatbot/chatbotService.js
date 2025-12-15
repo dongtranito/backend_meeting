@@ -61,7 +61,7 @@ Cuộc họp: ${m.title || "Không có tiêu đề"}
 - Lịch họp: ${m.scheduledAt?.toDate().toISOString() || "không rõ"}
 - Trạng thái (đã được ký cuộc họp hay chưa): ${m.status === "signed" ? `Đã ký và link cuộc họp đã ký rồi là ${m.minutes.signedMinute}` : "Chưa ký"}
 -Transcript của cuộc họp là: 
-${m.transcript.text}
+${m.transcript?.text || "Không có transcript"}
 ---
 `;
       })
@@ -124,7 +124,7 @@ Thông tin cuộc họp:
 - Trạng thái (đã được ký cuộc họp hay chưa):  ${meetingData.status === "signed" ? `Đã ký và link cuộc họp đã ký rồi là ${meetingData.minutes.signedMinute}` : "Chưa ký"}
 
 Transcript của cuộc họp là: 
-${meetingData.transcript.text}
+${meetingData.transcript?.text || "Không có transcript"}
 
 Câu hỏi người dùng ${memberDoc.data().name}: ${prompt}
 `;
