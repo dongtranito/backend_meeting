@@ -216,7 +216,8 @@ export async function updateMemberGroup(req, res) {
       userId,
       groupId,
       memberEmail,
-      { is_editor, name }
+      is_editor,
+      name 
     );
 
     return res.status(200).json({

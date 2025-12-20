@@ -162,55 +162,68 @@ export async function createMinute(userId, meetingId, audioUrl, prompt) {
     }
 
     const meetingData = meetingDoc.data();
-
-    if (meetingData.owner_id !== userId) {
-      throw new Error("Chỉ chủ cuộc họp mới có quyền tạo transcript");
+    const groupId = meetingData.group_id;
+    if (!groupId) throw new Error("Không tìm thấy group_id trong meeting");
+    
+    const groupRef = db.collection("groups").doc(groupId);
+    const memberRef = groupRef.collection("members").doc(userId);
+    const memberDoc = await memberRef.get();
+    
+    if (!memberDoc.exists) {
+      throw new Error("Thành viên không tồn tại trong group này");
+    }
+    
+    const memberData = memberDoc.data();
+    const is_editor = memberData.is_editor;
+    
+    if (meetingData.owner_id !== userId && !is_editor) {
+      throw new Error("Chỉ chủ cuộc họp hoặc người được cấp quyền chỉnh sửa mới có quyền tạo biên bản");
     }
 
     if (!meetingData.minutes?.sampleMinute) {
       throw new Error("Chưa có biên bản mẫu");
     }
 
-    if (meetingData.status && meetingData.status === "signed") {
-      throw new Error("Cuộc họp đã được ký, Không thể tạo lại biên bản");
-    }
-
-    let transcript
-    if (!meetingData.transcript) {
-      if (!audioUrl) {
-        throw new Error("không có url để tạo trancript trong hàm tạo biên bản")
-      }
-      console.log ("đang tạo transcript")
-      transcript = await createTranscript(userId, meetingId, audioUrl);  //trả về {text, segments} text là transcript á
-    } else {
-      transcript = meetingData.transcript
-    }
-
-    const data = {
-      prompt,
-      urlSampleMinute: meetingData.minutes.sampleMinute,
-      title: meetingData.title || "",
-      description: meetingData.description || "",
-      scheduledAt: meetingData.scheduledAt.toDate().toISOString() || "",
-      transcriptText: transcript.text || "",
-      metaData: meetingData.meta_data || {},
-    };
-    console.log("đang gen biên bản");
-    const result = await generateMinute(data);
-    await meetingRef.update({
-      "minutes.officeMinute": result.url,
-      "minutes.placeholder": result.aiResult,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    if (transcript.segments && transcript.segments.length > 0) {
-      const segments = transcript.segments.map(s => `[${s.speaker}] ${s.text}`);
-      deleteByMeetingId(meetingId)
-      addDocument(segments, meetingData.group_id, meetingId)
-    }
-    return result
-  } catch (error) {
-    throw new Error(error.message || "Không tạo được biên bản");
+  if (meetingData.status && meetingData.status === "signed") {
+    throw new Error("Cuộc họp đã được ký, Không thể tạo lại biên bản");
   }
+
+  let transcript
+  if (!meetingData.transcript) {
+    if (!audioUrl) {
+      throw new Error("không có url để tạo trancript trong hàm tạo biên bản")
+    }
+    console.log("đang tạo transcript")
+    transcript = await createTranscript(userId, meetingId, audioUrl);  //trả về {text, segments} text là transcript á
+  } else {
+    transcript = meetingData.transcript
+  }
+
+  const data = {
+    prompt,
+    urlSampleMinute: meetingData.minutes.sampleMinute,
+    title: meetingData.title || "",
+    description: meetingData.description || "",
+    scheduledAt: meetingData.scheduledAt.toDate().toISOString() || "",
+    transcriptText: transcript.text || "",
+    metaData: meetingData.meta_data || {},
+  };
+  console.log("đang gen biên bản");
+  const result = await generateMinute(data);
+  await meetingRef.update({
+    "minutes.officeMinute": result.url,
+    "minutes.placeholder": result.aiResult,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  if (transcript.segments && transcript.segments.length > 0) {
+    const segments = transcript.segments.map(s => `[${s.speaker}] ${s.text}`);
+    deleteByMeetingId(meetingId)
+    addDocument(segments, meetingData.group_id, meetingId)
+  }
+  return result
+} catch (error) {
+  throw new Error(error.message || "Không tạo được biên bản");
+}
 }
 
 export async function getMinute(userId, meetingId) {
@@ -255,8 +268,22 @@ export async function updateMinute(userId, meetingId, placeholder) {
     }
 
     const meetingData = meetingDoc.data();
-    if (meetingData.owner_id !== userId) {
-      throw new Error("Chỉ chủ cuộc họp mới được phép sửa minute");
+    const groupId = meetingData.group_id;
+    if (!groupId) throw new Error("Không tìm thấy group_id trong meeting");
+    
+    const groupRef = db.collection("groups").doc(groupId);
+    const memberRef = groupRef.collection("members").doc(userId);
+    const memberDoc = await memberRef.get();
+    
+    if (!memberDoc.exists) {
+      throw new Error("Thành viên không tồn tại trong group này");
+    }
+    
+    const memberData = memberDoc.data();
+    const is_editor = memberData.is_editor;
+    
+    if (meetingData.owner_id !== userId && !is_editor) {
+      throw new Error("Chỉ chủ cuộc họp hoặc người được cấp quyền chỉnh sửa mới được phép sửa minute");
     }
 
     if (meetingData.status && meetingData.status === "signed") {
@@ -344,7 +371,7 @@ export async function send2Sign(userId, meetingId, signerEmails) {
       "minutes.signerEmails": signerEmails,
     });
 
-    return {envelopeId, signerEmails}
+    return { envelopeId, signerEmails }
   } catch (error) {
     throw new Error(error.message || "Lỗi gởi biên bản để ký");
   }

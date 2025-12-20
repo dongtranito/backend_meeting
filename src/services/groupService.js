@@ -238,7 +238,7 @@ export async function inviteMember(userId, groupId, gmailInvite, name) {
   }
 }
 
-export async function updateMemberData(userId, groupId, memberEmail, newData) {
+export async function updateMemberData(userId, groupId, memberEmail, is_editor, name ) {
   try {
     const groupRef = db.collection("groups").doc(groupId);
     const memberRef = groupRef.collection("members").doc(memberEmail);
@@ -254,7 +254,7 @@ export async function updateMemberData(userId, groupId, memberEmail, newData) {
 
     const groupData = groupDoc.data();
     if (groupData.owner_id !== userId) {
-      throw new Error("Chỉ chủ group mới được phép sửa tên thành viên");
+      throw new Error("Chỉ chủ group mới được phép cập nhật thông tin thành viên");
     }
 
     if (!memberDoc.exists) {
@@ -265,18 +265,17 @@ export async function updateMemberData(userId, groupId, memberEmail, newData) {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    if (newData.is_editor !== undefined) {
-      updates.is_editor = newData.is_editor;
+    if (is_editor !== undefined) {
+      updates.is_editor = is_editor;
     }
 
-    if (newData.name !== undefined) {
-      updates.name = newData.name;
+    if (name !== undefined) {
+      updates.name = name;
     }
-
 
     await memberRef.update(updates);
 
-    if (newData.name !== undefined) {
+    if (name !== undefined) {
       Promise.resolve(mergeGroupVoicesUtil(groupId))
         .then(() => console.log(` Tạo ra được mergevoice của group thành công  ${groupId}`))
         .catch(err => console.error(`không tạo ra được mergevoice của group ${groupId}:`, err.message));
@@ -286,7 +285,7 @@ export async function updateMemberData(userId, groupId, memberEmail, newData) {
     return {
       groupId,
       memberEmail,
-      updatedName: newData.name,
+      updatedData: updates,
       message: "Đã cập nhật dữ liệu thành viên thành công",
     };
   } catch (error) {
