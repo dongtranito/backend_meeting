@@ -191,6 +191,7 @@ export async function getMeeting(userId, meetingId) {
             audioUrl: meetingData.audio_url,
             createdAt: meetingData.createdAt?.toDate().toISOString() || null,
             description: meetingData.description || "",
+            groupId: meetingData.group_id,
             minutes: {
                 sampleMinute: meetingData.minutes?.sampleMinute || null,
                 officeMinute: meetingData.minutes?.officeMinute || null,
